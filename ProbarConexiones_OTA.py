@@ -146,7 +146,7 @@ def actualizarSketch():
 #seleccionarMejorRedWiFiDisponible()
 
 #HOLA
-for i in range(3):
+for i in range(5):
   led.off()
   time.sleep_ms(250)
   led.on()
@@ -172,7 +172,7 @@ pixels.write()
 wifi.disconnect()
 
 #ADIOS
-for i in range(3):
+for i in range(5):
   led.off()
   time.sleep_ms(250)
   led.on()
