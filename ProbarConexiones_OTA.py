@@ -166,7 +166,7 @@ while not wifi.isconnected():
 print('WiFi IP:', wifi.ifconfig()[0])
 actualizarSketch()
 
-pixels.fill((255,255,0))
+pixels.fill((255,0,255))
 pixels.write()
 
 wifi.disconnect()
