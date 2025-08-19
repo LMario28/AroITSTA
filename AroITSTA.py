@@ -181,8 +181,11 @@ def actualizarSketch():
 
   print("*************************")
   print("ACTUALIZANDO SKETCH...")
-  ota_updater = OTAUpdater(SSID, PASSWD, firmware_url, "AroITSTA.py")
-  ota_updater.download_and_install_update_if_available()
+  try:
+    ota_updater = OTAUpdater(SSID, PASSWD, firmware_url, "AroITSTA.py")
+    ota_updater.download_and_install_update_if_available()
+  except:
+    print("NO SE PUDO ACTUALIZAR EL SKETCH")
   print("*************************")
 
 #-------------------------------------------------------------------------------
@@ -285,8 +288,8 @@ def desplegarHoraSegundo():
 #-------------------------------------------------------------------------------
   ledSegundoActual = RTC().datetime()[6] * LEDs_MINUTO
   pixels[ledSegundoActual] = (255,255,0)
-  if(ledSegundoActual==0):
-   desplegarImagen()
+  #if(ledSegundoActual==0):
+   #desplegarImagen()
 
 #///////////////////////////////////////////////////////////////////////////////
 #/ PROCESO   PROCESO   PROCESO   PROCESO   PROCESO   PROCESO   PROCESO        //
