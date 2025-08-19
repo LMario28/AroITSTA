@@ -376,7 +376,7 @@ def proceso():
   pass
 
 #HOLA
-for i in range(5):
+for i in range(2):
   led.off()
   time.sleep_ms(250)
   led.on()
@@ -500,7 +500,7 @@ while banderaSalida==False:
     wdt.feed()
 
 #ADIOS
-for i in range(3):
+for i in range(2):
   led.off()
   time.sleep_ms(250)
   led.on()
