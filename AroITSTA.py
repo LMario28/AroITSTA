@@ -376,7 +376,7 @@ def proceso():
   pass
 
 #HOLA
-for i in range(1):
+for i in range(5):
   led.off()
   time.sleep_ms(250)
   led.on()
