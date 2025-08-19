@@ -102,6 +102,7 @@ NEWKITT_PAUSA_AL_FINAL=50
 #///////////////////////////////////////////////////////////////////////////////
 #/                               OBJETOS                                    //
 #///////////////////////////////////////////////////////////////////////////////
+led = machine.Pin(2,machine.Pin.OUT)
 pixels = neopixel.NeoPixel(Pin(16, Pin.OUT), NUMERO_LEDs_RELOJ)
 pixelPantalla = neopixel.NeoPixel(Pin(17, Pin.OUT), NUMERO_LEDs_PANTALLA)
 from machine import RTC
@@ -374,6 +375,14 @@ def on_utc(value):
 def proceso():
   pass
 
+#HOLA
+for i in range(1):
+  led.off()
+  time.sleep_ms(250)
+  led.on()
+  time.sleep_ms(250)
+led.off()
+
 diaInicial=RTC().datetime()[2]
 opcionSeleccionadaAzar=0
 random.seed()
@@ -489,6 +498,14 @@ while banderaSalida==False:
 
   if (WATCHDOG):
     wdt.feed()
+
+#ADIOS
+for i in range(3):
+  led.off()
+  time.sleep_ms(250)
+  led.on()
+  time.sleep_ms(250)
+led.off()
 
 print("Programa terminado")
 
