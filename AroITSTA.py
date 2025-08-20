@@ -219,7 +219,16 @@ def desplegarMensajeVisual(tipLla):
       pixels.fill((0,0,0))
       pixels.write()
       time.sleep(0.25)
-      
+  # Inicio del ciclo infinito
+  if(tipLla==4):
+    for i in range(1):
+      pixels.fill((255,255,0))
+      pixels.write()
+      time.sleep(0.25)
+      pixels.fill((0,0,0))
+      pixels.write()
+      time.sleep(0.25)
+       
 #-------------------------------------------------------------------------------
 def actualizarHora():
 #-------------------------------------------------------------------------------
@@ -295,7 +304,8 @@ def desplegarHoraSegundo():
 #///////////////////////////////////////////////////////////////////////////////
 #/ PROCESO   PROCESO   PROCESO   PROCESO   PROCESO   PROCESO   PROCESO        //
 #///////////////////////////////////////////////////////////////////////////////
-#seleccionarMejorRedWiFiDisponible()
+def proceso():
+  pass
 
 seleccionarMejorRedWiFiDisponible()
 print("Connecting to WiFi network '{}'".format(SSID))
@@ -303,10 +313,10 @@ wifi = network.WLAN(network.STA_IF)
 wifi.active(True)
 wifi.connect(SSID,PASSWD)
 while not wifi.isconnected():
+  desplegarMensajeVisual(1)
   time.sleep(5)
   if (WATCHDOG):
     wdt.feed()
-  desplegarMensajeVisual(1)
   print('WiFi connect retry ...')
 print('WiFi IP:', wifi.ifconfig()[0])
 desplegarMensajeVisual(2)
@@ -374,11 +384,11 @@ def on_utc(value):
 #///////////////////////////////////////////////////////////////////////////////
 #/                                FIN DE TIMERS
 #///////////////////////////////////////////////////////////////////////////////
-def proceso():
+def proceso2():
   pass
 
 #HOLA
-for i in range(10):
+for i in range(3):
   led.off()
   time.sleep_ms(250)
   led.on()
@@ -406,6 +416,7 @@ else:
 print("Bandera reloj",banderaReloj)
 horaInicial=time.ticks_ms()-1000
 print("Hora inicial en milisegundos",horaInicial)
+desplegarMensajeVisual(4)
 while banderaSalida==False:
   try:
     # Posiciones en RTC(): 0. Año; 1: Mes; 2: Día; 4: Hora; 5: Minuto; 6: Segundo
