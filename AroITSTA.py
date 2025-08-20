@@ -306,8 +306,10 @@ while not wifi.isconnected():
   time.sleep(5)
   if (WATCHDOG):
     wdt.feed()
+  desplegarMensajeVisual(1)
   print('WiFi connect retry ...')
 print('WiFi IP:', wifi.ifconfig()[0])
+desplegarMensajeVisual(2)
 actualizarSketch()
 
 print("Connecting to Blynk server...")
