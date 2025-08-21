@@ -204,7 +204,7 @@ def desplegarMensajeVisual(tipLla):
   # Conexión a red WLAN exitosa (un parpadeo en verde opaco)
   elif(tipLla==2):
     for i in range(1):
-      pixels.fill((0,100,0))
+      pixels.fill((0,10,0))
       pixels.write()
       time.sleep(0.25)
       pixels.fill((0,0,0))
@@ -220,7 +220,7 @@ def desplegarMensajeVisual(tipLla):
       pixels.write()
       time.sleep(0.25)
   # Inicio del ciclo infinito
-  if(tipLla==4):
+  elif(tipLla==4):
     for i in range(1):
       pixels.fill((255,255,0))
       pixels.write()
