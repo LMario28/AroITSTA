@@ -481,6 +481,7 @@ while banderaSalida==False:
       if(time.ticks_ms()-horaInicial>1000):
         actualizarHora()
         horaInicial = time.ticks_ms()
+        desplegarHora();
 #         else:
 #           fuegosArtificiales()
 #     elif mes==12 or mes == 1:
