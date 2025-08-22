@@ -238,14 +238,14 @@ def actualizarHora():
   #global tiempoLocal
 
  
-#   pixels.fill((0,0,0))
+  pixels.fill((0,0,0))
 #   desplegarEsqueleto()
 #   desplegarHoraHora()
-#   desplegarHoraMinuto()
+  desplegarHoraMinuto()
 #   desplegarHoraSegundo()
 #   print("pixeles[0]:",pixels[0])
-#   pixels.write()
-  print(" pixeles[0]:",pixels[0])
+  pixels.write()
+  print(" Minuto: ",RTC().datetime()[5]," Segundo: ",RTC().datetime()[6])
 
 #-------------------------------------------------------------------------------
 def desplegarEsqueleto():
@@ -294,6 +294,10 @@ def desplegarImagen():
 def desplegarHoraMinuto():
 #-------------------------------------------------------------------------------
   ledMinutoActual = RTC().datetime()[5] * LEDs_MINUTO
+
+  if(RTC().datetime()[5]%5==0 and RTC().datetime()[6]==0):
+    actualizarSketch()
+
   pixels[ledMinutoActual-1] = (0,255,0)
   pixels[ledMinutoActual] = (0,255,0)
 
@@ -409,12 +413,12 @@ while not banderaHoraRecuperadaBlynk:
   blynk.run()
   timer.run()
 blynk.disconnect()
-wifi.disconnect()
-time.sleep(1)
-if not wifi.isconnected():
-  print("Desconectado de Blynk y WiFi")
-else:
-  print("WiFi connected. Can't disconnect")
+# wifi.disconnect()
+# time.sleep(1)
+# if not wifi.isconnected():
+#   print("Desconectado de Blynk y WiFi")
+# else:
+#   print("WiFi connected. Can't disconnect")
 
 # CICLO INFINITO EN ESPERA POR EVENTOS
 print("Bandera reloj",banderaReloj)
