@@ -242,7 +242,10 @@ def actualizarHora():
   desplegarHoraHora()
   desplegarHoraMinuto()
   desplegarHoraSegundo()
+  print("pixeles[0]:",pixels[0])
+  pixels.fill((255,0,0))
   pixels.write()
+  print(" pixeles[0]:",pixels[0])
 
 #-------------------------------------------------------------------------------
 def desplegarEsqueleto():
@@ -266,7 +269,8 @@ def desplegarHoraHora():
   hora = RTC().datetime()[4]
   if(hora>=12):
     hora -= 12
-  ledHoraActual = map(3600 * hora + 60 * RTC().datetime()[5] + RTC().datetime()[6], 0, 43200, 0, NUMERO_LEDS_SOLO_ARO) + 1;
+  ledHoraActual = map(3600 * hora + 60 * RTC().datetime()[5] + RTC().datetime()[6], 0, \
+                      43200, 0, NUMERO_LEDS_SOLO_ARO) + 1;
   pixels[ledHoraActual-1] = (255,0,0)
   pixels[ledHoraActual] = (255,0,0)
   pixels[ledHoraActual+1] = (255,0,0)
@@ -481,7 +485,6 @@ while banderaSalida==False:
       if(time.ticks_ms()-horaInicial>1000):
         actualizarHora()
         horaInicial = time.ticks_ms()
-        desplegarHora();
 #         else:
 #           fuegosArtificiales()
 #     elif mes==12 or mes == 1:
