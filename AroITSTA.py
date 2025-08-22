@@ -224,10 +224,10 @@ def desplegarMensajeVisual(tipLla):
     for i in range(1):
       pixels.fill((255,255,0))
       pixels.write()
-      time.sleep(0.25)
-      pixels.fill((0,0,0))
-      pixels.write()
-      time.sleep(0.25)
+      #time.sleep(0.25)
+      #pixels.fill((0,0,0))
+      #pixels.write()
+      #time.sleep(0.25)
        
 #-------------------------------------------------------------------------------
 def actualizarHora():
