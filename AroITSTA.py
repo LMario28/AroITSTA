@@ -240,14 +240,14 @@ def actualizarHora():
   pixels.fill((255,255,255))
   pixels.write()
 
-  pixels.fill((0,0,0))
-  desplegarEsqueleto()
-  desplegarHoraHora()
-  desplegarHoraMinuto()
-  desplegarHoraSegundo()
-  print("pixeles[0]:",pixels[0])
-  pixels.write()
-  print(" pixeles[0]:",pixels[0])
+#   pixels.fill((0,0,0))
+#   desplegarEsqueleto()
+#   desplegarHoraHora()
+#   desplegarHoraMinuto()
+#   desplegarHoraSegundo()
+#   print("pixeles[0]:",pixels[0])
+#   pixels.write()
+#   print(" pixeles[0]:",pixels[0])
 
 #-------------------------------------------------------------------------------
 def desplegarEsqueleto():
