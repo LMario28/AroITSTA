@@ -235,11 +235,9 @@ def actualizarHora():
   if(not banderaReloj):
     return
 
-  global tiempoLocal
+  #global tiempoLocal
 
-  pixels.fill((255,255,255))
-  pixels.write()
-
+ 
 #   pixels.fill((0,0,0))
 #   desplegarEsqueleto()
 #   desplegarHoraHora()
@@ -247,7 +245,7 @@ def actualizarHora():
 #   desplegarHoraSegundo()
 #   print("pixeles[0]:",pixels[0])
 #   pixels.write()
-#   print(" pixeles[0]:",pixels[0])
+  print(" pixeles[0]:",pixels[0])
 
 #-------------------------------------------------------------------------------
 def desplegarEsqueleto():
@@ -485,6 +483,8 @@ while banderaSalida==False:
           lucesDecembrinas(opcionSeleccionadaAzar)
     else:                                                                       # Otros meses
       if(time.ticks_ms()-horaInicial>1000):
+        pixels.fill((255,0,0))
+        pixels.write()
         actualizarHora()
         horaInicial = time.ticks_ms()
 #         else:
