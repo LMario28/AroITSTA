@@ -2,8 +2,8 @@
 
 # 1) Las posiciones de los LEDs son:
 #    Circunferencia: 1-180 (0-179)
-#    Linea izquierda: 184-237 (183-236)
-#    Linea izquierda: 238-291 (237-290)
+#    Linea izquierda: 232-290 (231-289)
+#    Linea derecha: 181-231 (180-230)
 
 # 2) El orden en los datos del tiempo (tupla) es:
 #    Año, mes (1-12), día del mes (1-31), hora (0-23), minuto (0-59), segundo (0-59), día de
@@ -46,6 +46,7 @@ from BlynkTimer_lmms import BlynkTimer
 import network
 from ota_lmms import OTAUpdater
 import random
+import math
 
 from machine import WDT
 
@@ -58,12 +59,34 @@ SSID=''
 PASSWD=''
 BLYNK_AUTH = 'apvVB1KTve_HC0uEb8ltb7tME6GhWIBs'
 
-NUMERO_LEDs_RELOJ=284
-NUMERO_LEDS_SOLO_ARO=180                                                       # 6. Navidad 1, 7. Navidad 2
+NUMERO_LEDs_RELOJ=291
+NUMERO_LEDS_SOLO_ARO=180
 NUMERO_LEDs_PANTALLA=576                                                       # Filas: 24, Columnas: 24
 PERIODO_FLASH_LED=1000
 LEDs_HORA=15
 LEDs_MINUTO=3
+
+# Rangos de LEDs
+CIRCULO_INICIO = 0
+CIRCULO_FIN = 179
+LINEA_IZQUIERDA_ARRIBA = 289
+LINEA_IZQUIERDA_ABAJO = 231
+LINEA_DERECHA_ARRIBA = 180
+LINEA_DERECHA_ABAJO = 230
+INTERVALO_BASE_ENTRE_TICKS=200                                                      # ms
+
+# Colores navideños
+ROJO = (255, 0, 0)
+VERDE = (0, 255, 0)
+BLANCO = (255, 255, 255)
+DORADO = (255, 215, 0)
+AZUL = (0, 0, 255)
+AMARILLO = (255, 255, 0)
+MARRON = (139, 69, 19)                                                         # Color para el tronco
+CAFE = (128, 64, 0)                                                            # Color para el tronco
+
+DENSIDAD_COPOS_NIEVE=40
+
 # 16,15,15,15,15,15,15,15,15,15,15,17 LEDs
 #define NUMERO_INTENTOS 5
 
@@ -73,14 +96,15 @@ LEDs_MINUTO=3
 
 # ANIMACIONES
 NUMERO_ANIMACIONES=14
-#                             RGB Loop      Fade In-Out      Strobe       Halloween Eyes  Cylon Bounce
-BANDERA_ANIMACION_ACTIVA = [   False,         False,          False,           False,          False,     \
+#                              Arbol      Copos de     Rotación       Halloween Eyes  Cylon Bounce
+#                             navideño     nieve       Navidad
+BANDERA_ANIMACION_ACTIVA = [   True,       True,        True,           False,          False,     \
 #                             New KITT       Twinkle     Twinkle Random      Sparkle      Snow Sparkle
 #                             (Navidad)                     (Navidad)                       (Navidad)
-                               True,          False,          True,           False,          True,      \
+                               False,          False,          False,           False,          False,      \
 #                           Running Lights  Color Wipe    Rainbow Cycle    Theater Chase
 #                             (Navidad)                     (Navidad)        (Navidad)
-                               True,          False,          True,           True                       \
+                               False,          False,          False,           False                       \
                            ]
 
 #ANIMACION=5                                                                   # 1: Flash LED, 2: Todo blanco, 3: Reloj, 4: Bandera, 5. Fiestas patrias,
@@ -102,7 +126,6 @@ NEWKITT_PAUSA_AL_FINAL=50
 #///////////////////////////////////////////////////////////////////////////////
 #/                               OBJETOS                                    //
 #///////////////////////////////////////////////////////////////////////////////
-led = machine.Pin(2,machine.Pin.OUT)
 pixels = neopixel.NeoPixel(Pin(16, Pin.OUT), NUMERO_LEDs_RELOJ)
 pixelPantalla = neopixel.NeoPixel(Pin(17, Pin.OUT), NUMERO_LEDs_PANTALLA)
 from machine import RTC
@@ -114,19 +137,22 @@ if (WATCHDOG):
 #/                               VARIABLES                                    //
 #///////////////////////////////////////////////////////////////////////////////
 tiempoLocal=''
-banderaSalida=False
 redActiva=0
 fechaHoraInicio=''
 ahorita=''
 diaInicial=''
 #timerReloj=''
 banderaHoraRecuperadaBlynk=False
-opcionSeleccionadaAzar=0
+opcion_seleccionada_azar=0
 i=1
 j=1
 k=0
+bandera_reloj=True
+bandera_animacion_iniciada=False
 incrementoDecremento=1
 contadorAnimaciones=0
+
+offset=0
 
 #///////////////////////////////////////////////////////////////////////////////
 #/                               FUNCIONES                                    //
@@ -204,7 +230,7 @@ def desplegarMensajeVisual(tipLla):
   # Conexión a red WLAN exitosa (un parpadeo en verde opaco)
   elif(tipLla==2):
     for i in range(1):
-      pixels.fill((0,10,0))
+      pixels.fill((0,100,0))
       pixels.write()
       time.sleep(0.25)
       pixels.fill((0,0,0))
@@ -219,49 +245,37 @@ def desplegarMensajeVisual(tipLla):
       pixels.fill((0,0,0))
       pixels.write()
       time.sleep(0.25)
-  # Inicio del ciclo infinito
-  elif(tipLla==4):
-    for i in range(1):
-      pixels.fill((255,255,0))
-      pixels.write()
-      #time.sleep(0.25)
-      #pixels.fill((0,0,0))
-      #pixels.write()
-      #time.sleep(0.25)
-       
+      
 #-------------------------------------------------------------------------------
 def actualizarHora():
 #-------------------------------------------------------------------------------
   if(not banderaReloj):
     return
 
-  #global tiempoLocal
+  global tiempoLocal
 
- 
   pixels.fill((0,0,0))
-#   desplegarEsqueleto()
-#   desplegarHoraHora()
+  desplegarEsqueleto()
+  desplegarHoraHora()
   desplegarHoraMinuto()
-#   desplegarHoraSegundo()
-#   print("pixeles[0]:",pixels[0])
+  desplegarHoraSegundo()
   pixels.write()
-  print(" Minuto: ",RTC().datetime()[5]," Segundo: ",RTC().datetime()[6])
 
 #-------------------------------------------------------------------------------
 def desplegarEsqueleto():
 #-------------------------------------------------------------------------------
   # MINUTO MINUTO MINUTO
   for i in range(60):
-    pixels[3*i] = (0,2,0)
+    pixels[3*i] = (0,4,0)
 
   # HORA HORA HORA
-  pixels[182] = (5,0,5)                                                         # LED 183
-  pixels[0] = (5,0,5)
-  pixels[1] = (5,0,5)
-  for i in range(11):
-    pixels[15*i-1] = (5,0,5)
-    pixels[15*i] = (5,0,5)
-    pixels[15*i+1] = (5,0,5)
+  pixels[179] = (10,0,10)                                                         # LED 183
+  pixels[0] = (10,0,10)
+  pixels[1] = (10,0,10)
+  for i in range(1,12):
+    pixels[15*i-1] = (10,0,10)
+    pixels[15*i] = (10,0,10)
+    pixels[15*i+1] = (10,0,10)
 
 #-------------------------------------------------------------------------------
 def desplegarHoraHora():
@@ -269,8 +283,7 @@ def desplegarHoraHora():
   hora = RTC().datetime()[4]
   if(hora>=12):
     hora -= 12
-  ledHoraActual = map(3600 * hora + 60 * RTC().datetime()[5] + RTC().datetime()[6], 0, \
-                      43200, 0, NUMERO_LEDS_SOLO_ARO) + 1;
+  ledHoraActual = map(3600 * hora + 60 * RTC().datetime()[5] + RTC().datetime()[6], 0, 43200, 0, NUMERO_LEDS_SOLO_ARO) + 1;
   pixels[ledHoraActual-1] = (255,0,0)
   pixels[ledHoraActual] = (255,0,0)
   pixels[ledHoraActual+1] = (255,0,0)
@@ -288,16 +301,11 @@ def desplegarImagen():
   azul=random.randint(0,255)
   for i in range(NUMERO_LEDs_PANTALLA):
     pixelPantalla[i] = (rojo,verde,azul)
-  print(rojo,"  ",verde,"   ",azul)
 
 #-------------------------------------------------------------------------------
 def desplegarHoraMinuto():
 #-------------------------------------------------------------------------------
   ledMinutoActual = RTC().datetime()[5] * LEDs_MINUTO
-
-  if(RTC().datetime()[5]%5==0 and RTC().datetime()[6]==0):
-    actualizarSketch()
-
   pixels[ledMinutoActual-1] = (0,255,0)
   pixels[ledMinutoActual] = (0,255,0)
 
@@ -306,14 +314,122 @@ def desplegarHoraSegundo():
 #-------------------------------------------------------------------------------
   ledSegundoActual = RTC().datetime()[6] * LEDs_MINUTO
   pixels[ledSegundoActual] = (255,255,0)
-  #if(ledSegundoActual==0):
-   #desplegarImagen()
+  if(ledSegundoActual==0):
+   desplegarImagen()
+
+#///////////////////////////////////////////////////////////////////////////////
+#/                              LUCES NAVIDEÑAS                               //
+#///////////////////////////////////////////////////////////////////////////////
+def desplegar_luces_navidenas():
+
+  if (opcion_seleccionada_azar==1):                                            # PINO NAVIDEÑO
+    # Semicirculo izquierdo (Copa) (de 9PM a 12PM)
+    base_inicio = int(NUMERO_LEDS_SOLO_ARO * 0.70)
+    base_fin = NUMERO_LEDS_SOLO_ARO
+    for i in range(base_inicio, base_fin):
+      intensidad = 100 + int(50 * math.sin(i * 0.2))
+      pixels[i] = (0, intensidad, 0)
+
+    # Semicirculo derecho (Copa) (12PM a 3PM)
+    base_inicio = 0
+    base_fin = int(NUMERO_LEDS_SOLO_ARO * 0.3)
+    for i in range(0, int(NUMERO_LEDS_SOLO_ARO * 0.3)):
+      intensidad = 100 + int(50 * math.sin(i * 0.2))
+      pixels[i] = (0, intensidad, 0)
+
+    # Línea vertical izquierda
+    for i in range(LINEA_IZQUIERDA_ABAJO, LINEA_IZQUIERDA_ARRIBA+1):
+      if (i>LINEA_IZQUIERDA_ABAJO+int((LINEA_IZQUIERDA_ARRIBA-LINEA_IZQUIERDA_ABAJO)*0.27)):
+        intensidad = 100 + int(50 * math.sin(i * 0.2))
+        pixels[i] = (0, intensidad, 0)
+      else:
+        pixels[i] = MARRON
+
+    # Línea vertical derecha
+    for i in range(LINEA_DERECHA_ARRIBA, LINEA_DERECHA_ABAJO+1):
+      if (i<LINEA_DERECHA_ARRIBA+int((LINEA_DERECHA_ABAJO-LINEA_DERECHA_ARRIBA)*0.7)):
+        intensidad = 100 + int(50 * math.sin(i * 0.2))
+        pixels[i] = (0, intensidad, 0)
+      else:
+        pixels[i] = MARRON
+        
+    # DECORACIONES EN LA COPA DEL ARBOL
+    # semicírculo izquierdo
+    base_inicio = int(NUMERO_LEDS_SOLO_ARO * 0.70)
+    base_fin = NUMERO_LEDS_SOLO_ARO
+    for _ in range(12):
+      posicion = random.randint(base_inicio, base_fin - 1)
+      color = random.choice([ROJO, BLANCO, DORADO, AZUL, AMARILLO])
+      pixels[posicion] = color
+    # Línea vertical izquierda
+    base_inicio = LINEA_IZQUIERDA_ABAJO + int((LINEA_IZQUIERDA_ARRIBA - LINEA_IZQUIERDA_ABAJO) * 0.27)
+    base_fin = LINEA_IZQUIERDA_ARRIBA
+    for _ in range(8):
+      posicion = random.randint(base_inicio+1, base_fin - 1)
+      color = random.choice([ROJO, BLANCO, DORADO, AZUL, AMARILLO])
+      pixels[posicion] = color
+    # Línea vertical derecha
+    base_inicio = LINEA_DERECHA_ARRIBA + int((LINEA_DERECHA_ABAJO - LINEA_DERECHA_ARRIBA) * 0.73)
+    base_fin = LINEA_DERECHA_ARRIBA
+    for _ in range(8):
+      posicion = random.randint(base_fin-1, base_inicio - 2)
+      color = random.choice([ROJO, BLANCO, DORADO, AZUL, AMARILLO])
+      pixels[posicion] = color
+    # semicírculo derecho
+    base_inicio = 0
+    base_fin = int(NUMERO_LEDS_SOLO_ARO * 0.3)
+    for _ in range(12):
+      posicion = random.randint(base_inicio, base_fin - 1)
+      color = random.choice([ROJO, BLANCO, DORADO, AZUL, AMARILLO])
+      pixels[posicion] = color
+
+    # Estrella en la parte superior (12 PM)
+    pixels[NUMERO_LEDS_SOLO_ARO-1] = DORADO
+    pixels[0] = DORADO
+    pixels[1] = DORADO
+
+    pixels.write()
+
+  elif (opcion_seleccionada_azar==2):                                          # COPOS DE NIEVE
+    apagar_todos_leds()
+    for _ in range(DENSIDAD_COPOS_NIEVE):
+      led = random.randint(0, NUMERO_LEDs_RELOJ - 1)
+      intensidad = random.randint(50, 200)
+      pixels[led] = (intensidad, intensidad, intensidad)
+
+    pixels.write()
+
+  elif (opcion_seleccionada_azar==3):                                          # ROTACION NAVIDADCOLORES NAVIDEÑOS
+    """Rotación de colores navideños en círculo - SOLO CÍRCULO"""
+    global offset
+
+    offset = (offset + 1) % NUMERO_LEDS_SOLO_ARO
+        
+    for i in range(0, NUMERO_LEDS_SOLO_ARO):
+      pos_circulo = i
+      pos = (pos_circulo - offset) % NUMERO_LEDS_SOLO_ARO
+      if pos % 4 == 0:
+        pixels[i] = VERDE
+      elif pos % 4 == 1:
+        pixels[i] = BLANCO
+      elif pos % 4 == 2:
+        pixels[i] = ROJO
+      else:
+        pixels[i] = DORADO
+        
+    pixels.write()
+
+#-------------------------------------------------------------------------------
+def apagar_todos_leds():
+#-------------------------------------------------------------------------------
+  for i in range(NUMERO_LEDs_RELOJ):
+    pixels[i] = (0, 0, 0)
+  pixels.write()
 
 #///////////////////////////////////////////////////////////////////////////////
 #/ PROCESO   PROCESO   PROCESO   PROCESO   PROCESO   PROCESO   PROCESO        //
 #///////////////////////////////////////////////////////////////////////////////
-def proceso():
-  pass
+#seleccionarMejorRedWiFiDisponible()
 
 seleccionarMejorRedWiFiDisponible()
 print("Connecting to WiFi network '{}'".format(SSID))
@@ -321,13 +437,11 @@ wifi = network.WLAN(network.STA_IF)
 wifi.active(True)
 wifi.connect(SSID,PASSWD)
 while not wifi.isconnected():
-  desplegarMensajeVisual(1)
   time.sleep(5)
   if (WATCHDOG):
     wdt.feed()
   print('WiFi connect retry ...')
 print('WiFi IP:', wifi.ifconfig()[0])
-desplegarMensajeVisual(2)
 actualizarSketch()
 
 print("Connecting to Blynk server...")
@@ -392,16 +506,8 @@ def on_utc(value):
 #///////////////////////////////////////////////////////////////////////////////
 #/                                FIN DE TIMERS
 #///////////////////////////////////////////////////////////////////////////////
-def proceso2():
+def proceso():
   pass
-
-#HOLA
-for i in range(3):
-  led.off()
-  time.sleep_ms(250)
-  led.on()
-  time.sleep_ms(250)
-led.off()
 
 diaInicial=RTC().datetime()[2]
 opcionSeleccionadaAzar=0
@@ -413,124 +519,86 @@ while not banderaHoraRecuperadaBlynk:
   blynk.run()
   timer.run()
 blynk.disconnect()
-# wifi.disconnect()
-# time.sleep(1)
-# if not wifi.isconnected():
-#   print("Desconectado de Blynk y WiFi")
-# else:
-#   print("WiFi connected. Can't disconnect")
+wifi.disconnect()
+time.sleep(1)
+if not wifi.isconnected():
+  print("Desconectado de Blynk y WiFi")
+else:
+  print("WiFi connected. Can't disconnect")
 
 # CICLO INFINITO EN ESPERA POR EVENTOS
-print("Bandera reloj",banderaReloj)
-horaInicial=time.ticks_ms()-1000
-print("Hora inicial en milisegundos",horaInicial)
-desplegarMensajeVisual(4)
-while banderaSalida==False:
+hora_inicial_tarea=time.ticks_ms()-1000
+while True:
   try:
     # Posiciones en RTC(): 0. Año; 1: Mes; 2: Día; 4: Hora; 5: Minuto; 6: Segundo
-    if (RTC().datetime()[2]!=diaInicial):
-      banderaAnimacionEstablecida=false
-      opcionSeleccionadaAzar=0
+    if (RTC().datetime()[2]!=diaInicial):                                       # Actualizar día
+      bandera_animacion_iniciada=False
+      opcion_seleccionada_azar=0
       diaInicial = RTC().datetime()[2]
 
     if (RTC().datetime()[1]==9):                                                # Septiembre
       if (RTC().datetime()[5]%5!=0):
-        if (not banderaReloj):
+        if (not bandera_reloj):
           #timerReloj = timer.set_interval(1,actualizarHora)
-          banderaReloj = True
-          banderaAnimacionEstablecida = False
+          bandera_reloj = True
+          bandera_animacion_iniciada = False
       else:
-        if (not banderaAnimacionEstablecida):
+        if (not bandera_animacion_iniciada):
           #timer._delete(timerReloj)
           #print("Timer del reloj borrado")
-          banderaReloj = False
-          if (opcionSeleccionadaAzar==0):
-            opcionSeleccionadaAzar = random.randint(1,1)
-          if (opcionSeleccionadaAzar==1):
+          bandera_reloj = False
+          if (opcion_seleccionada_azar==0):
+            opcion_seleccionada_azar = random.randint(1,1)
+          if (opcion_seleccionada_azar==1):
             bandera()
-          banderaAnimacionEstablecida = True
-    elif (RTC().datetime()[1]==12):                                            # Diciembre
-    #elif (RTC().datetime()[1]==11 and RTC().datetime()[2]==29):                   # Pruebas
-      if (RTC().datetime()[5]%3!=0):
-        if (not banderaReloj):
+          bandera_animacion_iniciada = True
+    elif (RTC().datetime()[1]==12 or RTC().datetime()[1]==1):                    # Diciembre|Enero
+      if (RTC().datetime()[5]%2!=0):
+        if (not bandera_reloj):                                                  # Reloj
           #timerReloj = timer.set_interval(1,actualizarHora)
-          banderaReloj = True
-          banderaAnimacionEstablecida = False
-        if(time.ticks_ms()>horaInicial):
+          bandera_reloj = True
+          bandera_animacion_iniciada = False
+          print("Desplegando la hora")
+        if(time.ticks_ms()-hora_inicial_tarea>1000):
           actualizarHora()
-          horaInicial = time.ticks_ms()
-      else:
-        if (not banderaAnimacionEstablecida):
-          banderaReloj = False
-          opcionSeleccionadaAzar = random.randint(6,6)
-          while(not BANDERA_ANIMACION_ACTIVA[opcionSeleccionadaAzar-1]):
-            opcionSeleccionadaAzar = random.randint(6,6)
-          #print("opcionSeleccionadaAzar:",opcionSeleccionadaAzar)
-          if(opcionSeleccionadaAzar==1 or opcionSeleccionadaAzar==2):
-            j = 0
-            k = 0
-            incrementoDecremento = 1
-            contadorAnimaciones = 0
-          elif(opcionSeleccionadaAzar==3):
-            j = 0
-          elif(opcionSeleccionadaAzar==6):
-            i = 1
-            j = NUMERO_LEDS_SOLO_ARO - NEWKITT_TAMANO_OJO - 2
-          horaInicial=time.ticks_ms()
-          banderaAnimacionEstablecida = True
+          hora_inicial_tarea = time.ticks_ms()
+      else:                                                                    # Animaciones Navideñas
+        if (not bandera_animacion_iniciada):
+          bandera_reloj = False
+          opcion_seleccionada_azar = random.randint(1,3)
+          while(not BANDERA_ANIMACION_ACTIVA[opcion_seleccionada_azar-1]):
+            opcion_seleccionada_azar = random.randint(1,3)
+          apagar_todos_leds()
+          hora_inicial_tarea = time.ticks_ms()
+          hora_inicial_tick = time.ticks_ms()
+          print("Desplegando animaciones navideñas (efecto:",opcion_seleccionada_azar,")")
+          if(opcion_seleccionada_azar==1 or opcion_seleccionada_azar==2):
+            pass
+          elif(opcion_seleccionada_azar==3):
+            offset = 0
+          desplegar_luces_navidenas()
+          bandera_animacion_iniciada = True
         else:
-          if (opcionSeleccionadaAzar==0):
-            opcionSeleccionadaAzar = random.randint(1,3)
-            while(BANDERA_ANIMACION_ACTIVA[opcionSeleccionadaAzar-1]):
-              opcionSeleccionadaAzar = random.randint(1,3)
-            print("opcionSeleccionadaAzar:",opcionSeleccionadaAzar)
-          lucesDecembrinas(opcionSeleccionadaAzar)
-    else:                                                                       # Otros meses
-      if(time.ticks_ms()-horaInicial>1000):
-        pixels.fill((255,0,0))
-        pixels.write()
+          if(opcion_seleccionada_azar==1 or opcion_seleccionada_azar==2):
+            if(time.ticks_ms()-hora_inicial_tick>INTERVALO_BASE_ENTRE_TICKS):
+              desplegar_luces_navidenas()
+              hora_inicial_tick = time.ticks_ms()
+          elif(opcion_seleccionada_azar==3):
+            if(time.ticks_ms()-hora_inicial_tick>50):
+              desplegar_luces_navidenas()
+              hora_inicial_tick = time.ticks_ms()
+    else:                                                                       # Otros meses (sólo reloj)
+      if(time.ticks_ms()-hora_inicial_tarea>1000):
         actualizarHora()
-        horaInicial = time.ticks_ms()
-#         else:
-#           fuegosArtificiales()
-#     elif mes==12 or mes == 1:
-#       if (opcionSeleccionadaAzar==0):
-#         opcionSeleccionadaAzar = random(1,3)
-#     }
-#     if (opcionSeleccionadaAzar == 1)
-#     {
-#       if (!banderaAnimacionEstablecida)
-#       {
-#         bandera();
-#         banderaAnimacionEstablecida = true;
-#       }
-#     }
-#     else
-#       fuegosArtificiales();
-#   }
-#   else
-#     desplegarHora();
-# 
-#   // Esperar que pase 1 segundo
-#   while (segundo == segundoAnterior)
-#     segundo = second();
-#   segundoAnterior = segundo;
-# }
+        hora_inicial_tarea = time.ticks_ms()
+
   except KeyboardInterrupt:
-    banderaSalida = True
+    print("Deteniendo programa...")
+    apagar_todos_leds()
+    break
 
   if (WATCHDOG):
     wdt.feed()
-
-#ADIOS
-for i in range(2):
-  led.off()
-  time.sleep_ms(250)
-  led.on()
-  time.sleep_ms(250)
-led.off()
-
-print("Programa terminado")
 
 #///////////////////////////////////////////////////////////////////////////////
 #/ PROVISIONAL   PROVISIONAL   PROVISIONAL   PROVISIONAL   PROVISIONAL        //
