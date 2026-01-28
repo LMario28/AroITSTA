@@ -450,7 +450,7 @@ print("DNS:", wifi.ifconfig()[3])
 
 actualizarSketch()
 
-desplegarImagen()
+#desplegarImagen()
 
 print("Connecting to Blynk server...")
 blynk = BlynkLib.Blynk(BLYNK_AUTH)
