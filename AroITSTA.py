@@ -44,7 +44,7 @@ import time
 import BlynkLib     # https://github.com/vshymanskyy/blynk-library-python/blob/master/examples/03_sync_virtual.py
 from BlynkTimer_lmms import BlynkTimer
 import network
-from ota_lmms import OTAUpdater
+from ota_deepseek import OTAUpdater
 import random
 import math
 
@@ -53,8 +53,9 @@ from machine import WDT
 #///////////////////////////////////////////////////////////////////////////////
 #/                               CONSTANTES                                   //
 #///////////////////////////////////////////////////////////////////////////////
-WIFI_SSID = ['INFINITUM2426_2.4','Electronica Hotspot PC','TP-Link_lmmsegura']
+WIFI_SSID = ['INFINITUM2426_2.4','Electronica Hotspot PC','TP-Link_LMario']
 WIFI_PASS = ['CNnC917MDE','electronica23','lmario28']
+STATIC_IP_CONFIG = ('192.168.40.238', '255.255.255.0', '192.168.40.1', '4.2.2.2 8.8.8.8')
 SSID=''
 PASSWD=''
 BLYNK_AUTH = 'apvVB1KTve_HC0uEb8ltb7tME6GhWIBs'
@@ -127,7 +128,7 @@ NEWKITT_PAUSA_AL_FINAL=50
 #/                               OBJETOS                                    //
 #///////////////////////////////////////////////////////////////////////////////
 pixels = neopixel.NeoPixel(Pin(16, Pin.OUT), NUMERO_LEDs_RELOJ)
-pixelPantalla = neopixel.NeoPixel(Pin(17, Pin.OUT), NUMERO_LEDs_PANTALLA)
+pixelsPantalla = neopixel.NeoPixel(Pin(17, Pin.OUT), NUMERO_LEDs_PANTALLA)
 from machine import RTC
 (year, month, mday, weekday, hour, minute, second, milisecond)=RTC().datetime()                
 if (WATCHDOG):
@@ -170,13 +171,13 @@ def seleccionarMejorRedWiFiDisponible():
 
   authmodes = ['Open', 'WEP', 'WPA-PSK' 'WPA2-PSK4', 'WPA/WPA2-PSK']
   redesWiFiDisponibles = wiFi.scan()
-#   for (ssid, bssid, channel, RSSI, authmode, hidden) in redesWiFiDisponibles:
-#     print("* {:s}".format(ssid))
-#     print("   - Auth: {} {}".format(authmodes[authmode], '(hidden)' if hidden else ''))
-#     print("   - Channel: {}".format(channel))
-#     print("   - RSSI: {}".format(RSSI))
-#     print("   - BSSID: {:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}".format(*bssid))
-#     print()
+  for (ssid, bssid, channel, RSSI, authmode, hidden) in redesWiFiDisponibles:
+    print("* {:s}".format(ssid))
+    print("   - Auth: {} {}".format(authmodes[authmode], '(hidden)' if hidden else ''))
+    print("   - Channel: {}".format(channel))
+    print("   - RSSI: {}".format(RSSI))
+    print("   - BSSID: {:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}".format(*bssid))
+    print()
 
   rssiMasFuerte = 999
   for redWiFi in redesWiFiDisponibles:
@@ -201,19 +202,19 @@ def seleccionarMejorRedWiFiDisponible():
 #-------------------------------------------------------------------------------
 def actualizarSketch():
 #-------------------------------------------------------------------------------
-  global SSID
-  global PASSWD
-
-  firmware_url = "https://raw.githubusercontent.com/LMario28/AroITSTA/"
-
-  print("*************************")
-  print("ACTUALIZANDO SKETCH...")
-  try:
-    ota_updater = OTAUpdater(SSID, PASSWD, firmware_url, "AroITSTA.py")
-    ota_updater.download_and_install_update_if_available()
-  except:
-    print("NO SE PUDO ACTUALIZAR EL SKETCH")
-  print("*************************")
+    global SSID, PASSWD
+    
+    print("*************************")
+    print("ACTUALIZANDO SKETCH...")
+    try:
+        firmware_url = "https://github.com/LMario28/AroITSTA/"
+        ota_updater = OTAUpdater(SSID, PASSWD, firmware_url, "AroITSTA.py")
+        ota_updater.download_and_install_update_if_available()
+    except Exception as e:
+        print(f"ERROR: {e}")
+        import sys
+        sys.print_exception(e)
+    print("*************************")
 
 #-------------------------------------------------------------------------------
 def desplegarMensajeVisual(tipLla):
@@ -296,11 +297,9 @@ def map(x, in_min, in_max, out_min, out_max):
   return (x - in_min) * (out_max - out_min) // (in_max - in_min) + out_min;
 
 def desplegarImagen():
-  rojo=random.randint(0,255)
-  verde=random.randint(0,255)
-  azul=random.randint(0,255)
-  for i in range(NUMERO_LEDs_PANTALLA):
-    pixelPantalla[i] = (rojo,verde,azul)
+  for i in range(14*14):
+    pixelsPantalla[i] = (10,0,0)
+  pixelsPantalla.write()
 
 #-------------------------------------------------------------------------------
 def desplegarHoraMinuto():
@@ -314,8 +313,6 @@ def desplegarHoraSegundo():
 #-------------------------------------------------------------------------------
   ledSegundoActual = RTC().datetime()[6] * LEDs_MINUTO
   pixels[ledSegundoActual] = (255,255,0)
-  if(ledSegundoActual==0):
-   desplegarImagen()
 
 #///////////////////////////////////////////////////////////////////////////////
 #/                              LUCES NAVIDEÑAS                               //
@@ -429,20 +426,31 @@ def apagar_todos_leds():
 #///////////////////////////////////////////////////////////////////////////////
 #/ PROCESO   PROCESO   PROCESO   PROCESO   PROCESO   PROCESO   PROCESO        //
 #///////////////////////////////////////////////////////////////////////////////
-#seleccionarMejorRedWiFiDisponible()
+def proceso():
+  pass
 
 seleccionarMejorRedWiFiDisponible()
 print("Connecting to WiFi network '{}'".format(SSID))
 wifi = network.WLAN(network.STA_IF)
 wifi.active(True)
 wifi.connect(SSID,PASSWD)
+if(SSID=="TP-Link_LMario"):
+  wifi.ifconfig(("192.168.40.238", "255.255.255.0", "192.168.40.1", "4.2.2.2"))
 while not wifi.isconnected():
   time.sleep(5)
   if (WATCHDOG):
     wdt.feed()
   print('WiFi connect retry ...')
-print('WiFi IP:', wifi.ifconfig()[0])
+
+print("conectado a:")
+print("IP:", wifi.ifconfig()[0])
+print("Netmask:", wifi.ifconfig()[1])
+print("Gateway:", wifi.ifconfig()[2])
+print("DNS:", wifi.ifconfig()[3])
+
 actualizarSketch()
+
+desplegarImagen()
 
 print("Connecting to Blynk server...")
 blynk = BlynkLib.Blynk(BLYNK_AUTH)
@@ -506,7 +514,7 @@ def on_utc(value):
 #///////////////////////////////////////////////////////////////////////////////
 #/                                FIN DE TIMERS
 #///////////////////////////////////////////////////////////////////////////////
-def proceso():
+def proceso2():
   pass
 
 diaInicial=RTC().datetime()[2]
