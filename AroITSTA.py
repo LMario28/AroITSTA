@@ -448,8 +448,6 @@ print("Netmask:", wifi.ifconfig()[1])
 print("Gateway:", wifi.ifconfig()[2])
 print("DNS:", wifi.ifconfig()[3])
 
-actualizarSketch()
-
 #desplegarImagen()
 
 print("Connecting to Blynk server...")
@@ -536,7 +534,14 @@ else:
 
 # CICLO INFINITO EN ESPERA POR EVENTOS
 hora_inicial_tarea=time.ticks_ms()-1000
+hora_inicial_tarea_actualizar_sketch = time.ticks_ms() - 60000 * 3
 while True:
+
+  if(time.ticks_ms() - hora_inicial_tarea_actualizar_sketch > 60000 * 3):
+    print("Actualizando el sketch...")
+    actualizarSketch()
+    hora_inicial_tarea_actualizar_sketch = time.ticks_ms()
+
   try:
     # Posiciones en RTC(): 0. Año; 1: Mes; 2: Día; 4: Hora; 5: Minuto; 6: Segundo
     if (RTC().datetime()[2]!=diaInicial):                                       # Actualizar día
