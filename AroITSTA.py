@@ -277,6 +277,8 @@ def desplegarEsqueleto():
     pixels[15*i-1] = (10,0,10)
     pixels[15*i] = (10,0,10)
     pixels[15*i+1] = (10,0,10)
+  if(RTC().datetime()[6]==0):
+    print(f"Desplegada la hora: {RTC().datetime()[4]}:{RTC().datetime()[5]}:{RTC().datetime()[6]}")
 
 #-------------------------------------------------------------------------------
 def desplegarHoraHora():
@@ -533,7 +535,7 @@ banderaReloj = True
 while not banderaHoraRecuperadaBlynk:
   blynk.run()
   timer.run()
-  blynk.disconnect()
+blynk.disconnect()
 # wifi.disconnect()
 # time.sleep(1)
 # if not wifi.isconnected():
@@ -543,15 +545,9 @@ while not banderaHoraRecuperadaBlynk:
 
 # CICLO INFINITO EN ESPERA POR EVENTOS
 hora_inicial_tarea=time.ticks_ms()-1000
-hora_inicial_tarea_actualizar_sketch = time.ticks_ms() - 60000 * 3
 while True:
 
   try:
-    if(time.ticks_ms() - hora_inicial_tarea_actualizar_sketch > 60000 * 3):
-      print("Actualizando el sketch...")
-      actualizarSketch()
-      hora_inicial_tarea_actualizar_sketch = time.ticks_ms()
-
     # Posiciones en RTC(): 0. Año; 1: Mes; 2: Día; 4: Hora; 5: Minuto; 6: Segundo
     if (RTC().datetime()[2]!=diaInicial):                                       # Actualizar día
       bandera_animacion_iniciada=False
@@ -574,7 +570,7 @@ while True:
           if (opcion_seleccionada_azar==1):
             bandera()
           bandera_animacion_iniciada = True
-    elif (RTC().datetime()[1]==12 or RTC().datetime()[1]==1):                    # Diciembre|Enero
+    elif (RTC().datetime()[1]==12):                                              # Diciembre|Enero
       if (RTC().datetime()[5]%2!=0):
         if (not bandera_reloj):                                                  # Reloj
           #timerReloj = timer.set_interval(1,actualizarHora)
@@ -622,7 +618,7 @@ while True:
     if not wifi.isconnected():
       print("Desconectado de Blynk y WiFi")
     else:
-     print("WiFi connected. Can't disconnect")
+      print("WiFi connected. Can't disconnect")
     break
 
   if (WATCHDOG):
