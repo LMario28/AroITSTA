@@ -205,12 +205,12 @@ def actualizarSketch():
   global SSID
   global PASSWD
 
-  firmware_url = "https://raw.githubusercontent.com/LMario28/A/"
+  firmware_url = "https://raw.githubusercontent.com/LMario28/AroITSTA/"
 
   print("*************************")
   print("ACTUALIZANDO SKETCH...")
   try:
-    ota_updater = OTAUpdater(SSID, PASSWD, firmware_url, "Reloj_44cm.py")
+    ota_updater = OTAUpdater(SSID, PASSWD, firmware_url, "AroITSTA.py")
     ota_updater.download_and_install_update_if_available()
   except:
     print("NO SE PUDO ACTUALIZAR EL SKETCH")
