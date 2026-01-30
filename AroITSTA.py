@@ -41,10 +41,10 @@ from machine import Pin
 import neopixel
 import time
 
-import BlynkLib     # https://github.com/vshymanskyy/blynk-library-python/blob/master/examples/03_sync_virtual.py
+import BlynkLib_deepseek     # https://github.com/vshymanskyy/blynk-library-python/blob/master/examples/03_sync_virtual.py
 from BlynkTimer_lmms import BlynkTimer
 import network
-from ota_deepseek import OTAUpdater
+from ota_deepseek_MicroPython1p27 import ControlledOTAUpdater
 import random
 import math
 
@@ -53,9 +53,9 @@ from machine import WDT
 #///////////////////////////////////////////////////////////////////////////////
 #/                               CONSTANTES                                   //
 #///////////////////////////////////////////////////////////////////////////////
-WIFI_SSID = ['INFINITUM2426_2.4','Electronica Hotspot PC','TP-Link_LMario']
-WIFI_PASS = ['CNnC917MDE','electronica23','lmario28']
-STATIC_IP_CONFIG = ('192.168.40.238', '255.255.255.0', '192.168.40.1', '4.2.2.2 8.8.8.8')
+WIFI_SSID = ['INFINITUM2426_2.4','Electronica Hotspot PC','Xperia XZ2','TP-Link_LMario']
+WIFI_PASS = ['CNnC917MDE','electronica26','lmario28','lmario28']
+STATIC_IP_CONFIG = ('192.168.40.222', '255.255.255.0', '192.168.40.1', '4.2.2.2 8.8.8.8')
 SSID=''
 PASSWD=''
 BLYNK_AUTH = 'apvVB1KTve_HC0uEb8ltb7tME6GhWIBs'
@@ -202,19 +202,19 @@ def seleccionarMejorRedWiFiDisponible():
 #-------------------------------------------------------------------------------
 def actualizarSketch():
 #-------------------------------------------------------------------------------
-    global SSID, PASSWD
-    
-    print("*************************")
-    print("ACTUALIZANDO SKETCH...")
-    try:
-        firmware_url = "https://github.com/LMario28/AroITSTA/"
-        ota_updater = OTAUpdater(SSID, PASSWD, firmware_url, "AroITSTA.py")
-        ota_updater.download_and_install_update_if_available()
-    except Exception as e:
-        print(f"ERROR: {e}")
-        import sys
-        sys.print_exception(e)
-    print("*************************")
+  global SSID
+  global PASSWD
+
+  firmware_url = "https://raw.githubusercontent.com/LMario28/Reloj_44cm/"
+
+  print("*************************")
+  print("ACTUALIZANDO SKETCH...")
+  try:
+    ota_updater = OTAUpdater(SSID, PASSWD, firmware_url, "Reloj_44cm.py")
+    ota_updater.download_and_install_update_if_available()
+  except:
+    print("NO SE PUDO ACTUALIZAR EL SKETCH")
+  print("*************************")
 
 #-------------------------------------------------------------------------------
 def desplegarMensajeVisual(tipLla):
@@ -429,6 +429,13 @@ def apagar_todos_leds():
 def proceso():
   pass
 
+print("Versión del programa: 0")
+
+import os
+stats = os.stat('AroITSTA.py')
+print(f"El sketch ocupa: {stats[6]} bytes")
+print(f"Memoria libre: {gc.mem_free()} bytes")
+
 seleccionarMejorRedWiFiDisponible()
 print("Connecting to WiFi network '{}'".format(SSID))
 wifi = network.WLAN(network.STA_IF)
@@ -451,7 +458,7 @@ print("DNS:", wifi.ifconfig()[3])
 #desplegarImagen()
 
 print("Connecting to Blynk server...")
-blynk = BlynkLib.Blynk(BLYNK_AUTH)
+blynk = BlynkLib_deepseek.Blynk(BLYNK_AUTH)
 
 # Create BlynkTimer Instance
 timer = BlynkTimer()
@@ -515,6 +522,9 @@ def on_utc(value):
 def proceso2():
   pass
 
+print("Actualizando el sketch -0...")
+actualizarSketch()
+
 diaInicial=RTC().datetime()[2]
 opcionSeleccionadaAzar=0
 random.seed()
@@ -524,25 +534,25 @@ banderaReloj = True
 while not banderaHoraRecuperadaBlynk:
   blynk.run()
   timer.run()
-blynk.disconnect()
-wifi.disconnect()
-time.sleep(1)
-if not wifi.isconnected():
-  print("Desconectado de Blynk y WiFi")
-else:
-  print("WiFi connected. Can't disconnect")
+  blynk.disconnect()
+# wifi.disconnect()
+# time.sleep(1)
+# if not wifi.isconnected():
+#   print("Desconectado de Blynk y WiFi")
+# else:
+#   print("WiFi connected. Can't disconnect")
 
 # CICLO INFINITO EN ESPERA POR EVENTOS
 hora_inicial_tarea=time.ticks_ms()-1000
 hora_inicial_tarea_actualizar_sketch = time.ticks_ms() - 60000 * 3
 while True:
 
-  if(time.ticks_ms() - hora_inicial_tarea_actualizar_sketch > 60000 * 3):
-    print("Actualizando el sketch...")
-    actualizarSketch()
-    hora_inicial_tarea_actualizar_sketch = time.ticks_ms()
-
   try:
+    if(time.ticks_ms() - hora_inicial_tarea_actualizar_sketch > 60000 * 3):
+      print("Actualizando el sketch...")
+      actualizarSketch()
+      hora_inicial_tarea_actualizar_sketch = time.ticks_ms()
+
     # Posiciones en RTC(): 0. Año; 1: Mes; 2: Día; 4: Hora; 5: Minuto; 6: Segundo
     if (RTC().datetime()[2]!=diaInicial):                                       # Actualizar día
       bandera_animacion_iniciada=False
@@ -608,6 +618,12 @@ while True:
   except KeyboardInterrupt:
     print("Deteniendo programa...")
     apagar_todos_leds()
+    wifi.disconnect()
+    time.sleep(1)
+    if not wifi.isconnected():
+      print("Desconectado de Blynk y WiFi")
+    else:
+     print("WiFi connected. Can't disconnect")
     break
 
   if (WATCHDOG):
