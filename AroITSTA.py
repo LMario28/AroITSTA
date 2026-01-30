@@ -429,7 +429,7 @@ def apagar_todos_leds():
 def proceso():
   pass
 
-print("Versión del programa: 0")
+print("Versión del programa: 1")
 
 import os
 stats = os.stat('AroITSTA.py')
