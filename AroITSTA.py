@@ -44,7 +44,7 @@ import time
 import BlynkLib_deepseek     # https://github.com/vshymanskyy/blynk-library-python/blob/master/examples/03_sync_virtual.py
 from BlynkTimer_lmms import BlynkTimer
 import network
-from ota_deepseek_MicroPython1p27 import ControlledOTAUpdater
+from ota_deepseek import OTAUpdater
 import random
 import math
 
@@ -205,7 +205,7 @@ def actualizarSketch():
   global SSID
   global PASSWD
 
-  firmware_url = "https://raw.githubusercontent.com/LMario28/Reloj_44cm/"
+  firmware_url = "https://raw.githubusercontent.com/LMario28/A/"
 
   print("*************************")
   print("ACTUALIZANDO SKETCH...")
@@ -431,10 +431,10 @@ def proceso():
 
 print("Versión del programa: 1")
 
-import os
-stats = os.stat('AroITSTA.py')
-print(f"El sketch ocupa: {stats[6]} bytes")
-print(f"Memoria libre: {gc.mem_free()} bytes")
+# import os
+# stats = os.stat('AroITSTA.py')
+# print(f"El sketch ocupa: {stats[6]} bytes")
+# print(f"Memoria libre: {gc.mem_free()} bytes")
 
 seleccionarMejorRedWiFiDisponible()
 print("Connecting to WiFi network '{}'".format(SSID))
@@ -454,6 +454,8 @@ print("IP:", wifi.ifconfig()[0])
 print("Netmask:", wifi.ifconfig()[1])
 print("Gateway:", wifi.ifconfig()[2])
 print("DNS:", wifi.ifconfig()[3])
+
+actualizarSketch()
 
 #desplegarImagen()
 
@@ -521,9 +523,6 @@ def on_utc(value):
 #///////////////////////////////////////////////////////////////////////////////
 def proceso2():
   pass
-
-print("Actualizando el sketch -0...")
-actualizarSketch()
 
 diaInicial=RTC().datetime()[2]
 opcionSeleccionadaAzar=0
