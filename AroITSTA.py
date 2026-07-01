@@ -24,17 +24,7 @@
 
 # 4) Los timers no se borran (pendiente corregir)
 
-# 5) Pasos para borra el contenido del ESP32 (si no se puede con Thonny)
-#    (https://randomnerdtutorials.com/esp32-erase-flash-memory/)
-
-#    a) Instalar:
-
-#      sudo pip install esptool
-#      sudo pip install setuptools
-
-#    a) Correr:
-
-#       python3 esptool --chip esp32 erase_flash
+# 5) Correr con al menos MicroPython v.1.27
 
 import machine
 from machine import Pin
@@ -53,7 +43,7 @@ from machine import WDT
 #///////////////////////////////////////////////////////////////////////////////
 #/                               CONSTANTES                                   //
 #///////////////////////////////////////////////////////////////////////////////
-WIFI_SSID = ['INFINITUM2426_2.4','Electronica Hotspot PC','Xperia XZ2','TP-Link_LMario']
+WIFI_SSID = ['INFINITUM2426_2.4','Electronica Hotspot PC','Xperia XZ2','TP-Link_LMario_DHCP']
 WIFI_PASS = ['CNnC917MDE','electronica26','lmario28','lmario28']
 STATIC_IP_CONFIG = ('192.168.40.222', '255.255.255.0', '192.168.40.1', '4.2.2.2 8.8.8.8')
 SSID=''
@@ -76,7 +66,29 @@ LINEA_DERECHA_ARRIBA = 180
 LINEA_DERECHA_ABAJO = 230
 INTERVALO_BASE_ENTRE_TICKS=200                                                      # ms
 
-# Colores navideños
+NUMERO_PALETAS_COLORES=4
+
+# COLORES RELOJ
+# Facinación
+COLOR_RELOJ_HORAS_INACTIVAS_FASCINACION=(20,0,20)
+COLOR_RELOJ_MINUTOS_INACTIVOS_FASCINACION=(0,4,0)
+COLOR_RELOJ_HORA_ACTIVA_FASCINACION=(255,0,0)
+COLOR_RELOJ_MINUTO_ACTIVO_FASCINACION=(0,255,0)
+COLOR_RELOJ_SEGUNDO_ACTIVO_FASCINACION=(255,255,0)
+#Nebula
+COLOR_RELOJ_HORAS_INACTIVAS_NEBULA=(0,0,20)
+COLOR_RELOJ_MINUTOS_INACTIVOS_NEBULA=(4,4,4)
+COLOR_RELOJ_HORA_ACTIVA_NEBULA=(255,255,255)
+COLOR_RELOJ_MINUTO_ACTIVO_NEBULA=(0,255,180)
+COLOR_RELOJ_SEGUNDO_ACTIVO_NEBULA=(254,50,0)
+#Minimalista
+COLOR_RELOJ_HORAS_INACTIVAS_MINIMALISTA=(0,0,0)
+COLOR_RELOJ_MINUTOS_INACTIVOS_MINIMALISTA=(0,0,0)
+COLOR_RELOJ_HORA_ACTIVA_MINIMALISTA=(255,0,0)
+COLOR_RELOJ_MINUTO_ACTIVO_MINIMALISTA=(0,255,0)
+COLOR_RELOJ_SEGUNDO_ACTIVO_MINIMALISTA=(255,255,255)
+
+# COLORES NAVIDEÑOS
 ROJO = (255, 0, 0)
 VERDE = (0, 255, 0)
 BLANCO = (255, 255, 255)
@@ -125,10 +137,10 @@ NEWKITT_VELOCIDAD_ANIMACION=10
 NEWKITT_PAUSA_AL_FINAL=50
 
 #///////////////////////////////////////////////////////////////////////////////
-#/                               OBJETOS                                    //
+#/                                 OBJETOS                                    //
 #///////////////////////////////////////////////////////////////////////////////
-pixels = neopixel.NeoPixel(Pin(16, Pin.OUT), NUMERO_LEDs_RELOJ)
-pixelsPantalla = neopixel.NeoPixel(Pin(17, Pin.OUT), NUMERO_LEDs_PANTALLA)
+pixels = neopixel.NeoPixel(Pin(48, Pin.OUT), NUMERO_LEDs_RELOJ)
+pixelsPantalla = neopixel.NeoPixel(Pin(47, Pin.OUT), NUMERO_LEDs_PANTALLA)
 from machine import RTC
 (year, month, mday, weekday, hour, minute, second, milisecond)=RTC().datetime()                
 if (WATCHDOG):
@@ -153,6 +165,21 @@ bandera_animacion_iniciada=False
 incrementoDecremento=1
 contadorAnimaciones=0
 
+factor_ajuste_brillo_inactivos=0.25
+factor_ajuste_brillo_activos=0.8
+color_reloj_horas_inactivas=tuple(c*factor_ajuste_brillo_inactivos for c in COLOR_RELOJ_HORAS_INACTIVAS_FASCINACION)
+color_reloj_horas_inactivas = tuple(int(d+0.5) for d in color_reloj_horas_inactivas)
+color_reloj_minutos_inactivos=tuple(c*factor_ajuste_brillo_inactivos for c in COLOR_RELOJ_MINUTOS_INACTIVOS_FASCINACION)
+color_reloj_minutos_inactivos = tuple(int(d+0.5) for d in color_reloj_minutos_inactivos)
+color_reloj_hora_activa=tuple(c*factor_ajuste_brillo_activos for c in COLOR_RELOJ_HORA_ACTIVA_FASCINACION)
+color_reloj_hora_activa = tuple(int(d+0.5) for d in color_reloj_hora_activa)
+color_reloj_minuto_activo=tuple(c*factor_ajuste_brillo_activos for c in COLOR_RELOJ_MINUTO_ACTIVO_FASCINACION)
+color_reloj_minuto_activo = tuple(int(d+0.5) for d in color_reloj_minuto_activo)
+color_reloj_segundo_activo=tuple(c*factor_ajuste_brillo_activos for c in COLOR_RELOJ_SEGUNDO_ACTIVO_FASCINACION)
+color_reloj_segundo_activo = tuple(int(d+0.5) for d in color_reloj_segundo_activo)
+paletaColores=-1
+bandera_ajuste_luz_ambiental=False
+
 offset=0
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -171,33 +198,30 @@ def seleccionarMejorRedWiFiDisponible():
 
   authmodes = ['Open', 'WEP', 'WPA-PSK' 'WPA2-PSK4', 'WPA/WPA2-PSK']
   redesWiFiDisponibles = wiFi.scan()
+  print(redesWiFiDisponibles)
+  rssiMasFuerte = -999
   for (ssid, bssid, channel, RSSI, authmode, hidden) in redesWiFiDisponibles:
-    print("* {:s}".format(ssid))
-    print("   - Auth: {} {}".format(authmodes[authmode], '(hidden)' if hidden else ''))
-    print("   - Channel: {}".format(channel))
-    print("   - RSSI: {}".format(RSSI))
-    print("   - BSSID: {:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}".format(*bssid))
-    print()
-
-  rssiMasFuerte = 999
-  for redWiFi in redesWiFiDisponibles:
-    #print ("> " + str(redWiFi[0],"utf-8"))
-    #print ("> " + str(redWiFi[3]))
-    ssid = str(redWiFi[0],"utf-8")
+    ssidLocal="{:s}".format(ssid)
     try:
-      indiceRed = WIFI_SSID.index(ssid)
+      indiceRed=WIFI_SSID.index(ssidLocal)
+      rssiLocal="{}".format(RSSI)
+      rssiLocal = int(rssiLocal)
     except ValueError:
       continue
+    if(int(rssiLocal)>rssiMasFuerte):
+      SSID = ssidLocal
+      PASSWD = WIFI_PASS[indiceRed]
+      redActiva = indiceRed + 1
+      rssiMasFuerte = rssiLocal
+        
+    print(ssidLocal)
+    #print("   - Auth: {} {}".format(authmodes[authmode], '(hidden)' if hidden else ''))
+    #print("   - Channel: {}".format(channel))
+    print("   - RSSI: {}".format(RSSI))
+    #print("   - BSSID: {:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}".format(*bssid))
+    print()
 
-    SSID = ssid
-    PASSWD = WIFI_PASS[indiceRed]
-    redActiva = indiceRed + 1
-      
-    if rssiMasFuerte!=999:
-      rssi = str(redWiFi[3])
-      if rssi<rssiMasFuerte:
-        rssiMasFuerte = rssi
-    print("Mejor red disponible:",redActiva,"|",SSID,"|",PASSWD)
+  print("Mejor red disponible:",SSID,"|",PASSWD)
 
 #-------------------------------------------------------------------------------
 def actualizarSketch():
@@ -287,9 +311,15 @@ def desplegarHoraHora():
   if(hora>=12):
     hora -= 12
   ledHoraActual = map(3600 * hora + 60 * RTC().datetime()[5] + RTC().datetime()[6], 0, 43200, 0, NUMERO_LEDS_SOLO_ARO) + 1;
-  pixels[ledHoraActual-1] = (255,0,0)
-  pixels[ledHoraActual] = (255,0,0)
-  pixels[ledHoraActual+1] = (255,0,0)
+
+  # Asegurar que los índices estén dentro del rango circular (0-119)
+  indice1 = (ledHoraActual - 1) % NUMERO_LEDs_RELOJ
+  indice2 = ledHoraActual % NUMERO_LEDs_RELOJ
+  indice3 = (ledHoraActual + 1) % NUMERO_LEDs_RELOJ
+
+  pixels[indice1] = color_reloj_hora_activa
+  pixels[indice2] = color_reloj_hora_activa
+  pixels[indice3] = color_reloj_hora_activa
 
   pixels[LEDs_HORA*redActiva + 2] = (1,1,1)
 
@@ -298,23 +328,25 @@ def map(x, in_min, in_max, out_min, out_max):
 #-------------------------------------------------------------------------------
   return (x - in_min) * (out_max - out_min) // (in_max - in_min) + out_min;
 
+#-------------------------------------------------------------------------------
 def desplegarImagen():
-  for i in range(14*14):
-    pixelsPantalla[i] = (10,0,0)
+#-------------------------------------------------------------------------------
+  for i in range(24*24):
+    pixelsPantalla[i] = (0,0,10)
   pixelsPantalla.write()
 
 #-------------------------------------------------------------------------------
 def desplegarHoraMinuto():
 #-------------------------------------------------------------------------------
   ledMinutoActual = RTC().datetime()[5] * LEDs_MINUTO
-  pixels[ledMinutoActual-1] = (0,255,0)
-  pixels[ledMinutoActual] = (0,255,0)
+  pixels[ledMinutoActual-1] = color_reloj_minuto_activo
+  pixels[ledMinutoActual] = color_reloj_minuto_activo
 
 #-------------------------------------------------------------------------------
 def desplegarHoraSegundo():
 #-------------------------------------------------------------------------------
   ledSegundoActual = RTC().datetime()[6] * LEDs_MINUTO
-  pixels[ledSegundoActual] = (255,255,0)
+  pixels[ledSegundoActual] = color_reloj_segundo_activo
 
 #///////////////////////////////////////////////////////////////////////////////
 #/                              LUCES NAVIDEÑAS                               //
@@ -428,7 +460,9 @@ def apagar_todos_leds():
 #///////////////////////////////////////////////////////////////////////////////
 #/ PROCESO   PROCESO   PROCESO   PROCESO   PROCESO   PROCESO   PROCESO        //
 #///////////////////////////////////////////////////////////////////////////////
+#-------------------------------------------------------------------------------
 def proceso():
+#-------------------------------------------------------------------------------
   pass
 
 print("Versión del programa: 1")
@@ -442,24 +476,42 @@ seleccionarMejorRedWiFiDisponible()
 print("Connecting to WiFi network '{}'".format(SSID))
 wifi = network.WLAN(network.STA_IF)
 wifi.active(True)
+
+# Configurar IP FIJA
+if(SSID=="TP-Link_LMario_DHCP"):
+  IP_FIJA = "192.168.0.51"
+  MASCARA = "255.255.255.0"
+  GATEWAY = "192.168.0.1"
+  DNS = "192.168.0.1"
+  wifi.ifconfig((IP_FIJA, MASCARA, GATEWAY, DNS))
+  print(f"Conectando a WiFi con IP fija: {IP_FIJA}", end="")
+
 wifi.connect(SSID,PASSWD)
-if(SSID=="TP-Link_LMario"):
-  wifi.ifconfig(("192.168.40.238", "255.255.255.0", "192.168.40.1", "4.2.2.2"))
 while not wifi.isconnected():
   time.sleep(5)
   if (WATCHDOG):
     wdt.feed()
   print('WiFi connect retry ...')
 
-print("conectado a:")
-print("IP:", wifi.ifconfig()[0])
-print("Netmask:", wifi.ifconfig()[1])
-print("Gateway:", wifi.ifconfig()[2])
-print("DNS:", wifi.ifconfig()[3])
+if wifi.isconnected():
+  print("\n✅ Conectado a WiFi")
+  config = wifi.ifconfig()
+  print(f"📡 IP asignada: {config[0]}")
+  print(f"   Máscara: {config[1]}")
+  print(f"   Gateway: {config[2]}")
+  print(f"   DNS: {config[3]}")
+
+  # Verificar que se asignó la IP fija
+  if config[0] != IP_FIJA:
+    print(f"⚠️ Advertencia: IP asignada ({config[0]}) diferente a IP \
+         fija ({IP_FIJA})")
+    print("   Posible conflicto - prueba con otra IP")
+else:
+  print("\n❌ No se pudo conectar a WiFi")
 
 actualizarSketch()
 
-#desplegarImagen()
+desplegarImagen()
 
 print("Connecting to Blynk server...")
 blynk = BlynkLib_deepseek.Blynk(BLYNK_AUTH)
@@ -471,34 +523,38 @@ timer = BlynkTimer()
 #/                               FUNCIONES BLYNK
 #///////////////////////////////////////////////////////////////////////////////
 @blynk.on("connected")
+#-------------------------------------------------------------------------------
 def blynk_connected(ping):
+#-------------------------------------------------------------------------------
   desplegarMensajeVisual(3)
   print('Blynk ready. Ping:', ping, 'ms')
   blynk.send_internal("utc","time")
   print('RTC sync request was sent')
 
 @blynk.on("disconnected")
+#-------------------------------------------------------------------------------
 def blynk_disconnected():
-    print('Blynk disconnected')
+#-------------------------------------------------------------------------------
+  print('Blynk disconnected')
 banderaSalida=False
 
 @blynk.on("internal:utc")
+#-------------------------------------------------------------------------------
 def on_utc(value):
+#-------------------------------------------------------------------------------
   global tiempoLocal,banderaHoraRecuperadaBlynk
 
   if value[0] == "time":
     ts = int(value[1])//1000
-    # on embedded systems, you may need to subtract time difference between 1970 and 2000
-    ts -= 946684800
-    # Ajuste por zona
-    ts += 3600 * ZONA_MEXICO
     tiempoLocal = time.localtime(ts)
-    # Año, mes (1-12), día del mes (1-31), hora (0-23), minuto (0-59), segundo (0-59), día de
-    # la semana (0-6 de lunes a domingo), día de año (1-366)
+    print("Tiempo UTC:", tiempoLocal)
+    # Año[0], mes[1] (1-12), día del mes[2] (1-31), hora[3] (0-23), minuto[4] (0-59), segundo[5] (0-59), día de
+    # la semana[6] (0-6 de lunes a domingo), día de año[7] (1-366)
     # SINCRONIZACIÓN DEL RELOJ INTERNO E IMPRESIÓN DE FECHA Y HORA
-    #RTC().init((year, month, mday, weekday, hour, minute, second, milisecond))
-    RTC().init((tiempoLocal[0], tiempoLocal[1], tiempoLocal[2], tiempoLocal[6], tiempoLocal[3], \
-                tiempoLocal[4], tiempoLocal[5], milisecond))
+    #RTC().init((year, month, mday, hour, minute, second, microsecond (no utilizada),tzinfo (no utilizada)))
+    RTC().init((tiempoLocal[0]-30, tiempoLocal[1], tiempoLocal[2], tiempoLocal[3]+ZONA_MEXICO, tiempoLocal[4], \
+                tiempoLocal[5], 0, 0))
+    print("Hora RTC:",RTC().datetime())
     print ("Fecha: {:02d}/{:02d}/{}".format(RTC().datetime()[2],
                                         RTC().datetime()[1],
                                         RTC().datetime()[0]))
@@ -509,7 +565,68 @@ def on_utc(value):
   #elif value[0] == "tz_name":
     #print("Timezone: ", value[1])
 
+
   banderaHoraRecuperadaBlynk=True
+
+@blynk.on("V0")
+#-------------------------------------------------------------------------------
+def v0_write_handler_modo(value):
+#-------------------------------------------------------------------------------
+  global paletaColores
+  global color_reloj_horas_inactivas,color_reloj_minutos_inactivos
+  global color_reloj_hora_activa,color_reloj_minuto_activo,color_reloj_segundo_activo
+  paletaColores = int(value[0])
+
+  if(paletaColores==3):
+    paletaColores = random.randint(0,NUMERO_PALETAS_COLORES-2)
+
+  if(paletaColores==0):
+    color_reloj_horas_inactivas=tuple(c*factor_ajuste_brillo_inactivos for c in COLOR_RELOJ_HORAS_INACTIVAS_FASCINACION)
+    color_reloj_horas_inactivas = tuple(int(d+0.5) for d in color_reloj_horas_inactivas)
+    color_reloj_minutos_inactivos=tuple(c*factor_ajuste_brillo_inactivos for c in COLOR_RELOJ_MINUTOS_INACTIVOS_FASCINACION)
+    color_reloj_minutos_inactivos = tuple(int(d+0.5) for d in color_reloj_minutos_inactivos)
+    color_reloj_hora_activa=tuple(c*factor_ajuste_brillo_activos for c in COLOR_RELOJ_HORA_ACTIVA_FASCINACION)
+    color_reloj_hora_activa = tuple(int(d+0.5) for d in color_reloj_hora_activa)
+    color_reloj_minuto_activo=tuple(c*factor_ajuste_brillo_activos for c in COLOR_RELOJ_MINUTO_ACTIVO_FASCINACION)
+    color_reloj_minuto_activo = tuple(int(d+0.5) for d in color_reloj_minuto_activo)
+    color_reloj_segundo_activo=tuple(c*factor_ajuste_brillo_activos for c in COLOR_RELOJ_SEGUNDO_ACTIVO_FASCINACION)
+    color_reloj_segundo_activo = tuple(int(d+0.5) for d in color_reloj_segundo_activo)
+  elif(paletaColores==1):
+    color_reloj_horas_inactivas=tuple(c*factor_ajuste_brillo_inactivos for c in COLOR_RELOJ_HORAS_INACTIVAS_NEBULA)
+    color_reloj_horas_inactivas = tuple(int(d+0.5) for d in color_reloj_horas_inactivas)
+    color_reloj_minutos_inactivos=tuple(c*factor_ajuste_brillo_inactivos for c in COLOR_RELOJ_MINUTOS_INACTIVOS_NEBULA)
+    color_reloj_minutos_inactivos = tuple(int(d+0.5) for d in color_reloj_minutos_inactivos)
+    color_reloj_hora_activa=tuple(c*factor_ajuste_brillo_activos for c in COLOR_RELOJ_HORA_ACTIVA_NEBULA)
+    color_reloj_hora_activa = tuple(int(d+0.5) for d in color_reloj_hora_activa)
+    color_reloj_minuto_activo=tuple(c*factor_ajuste_brillo_activos for c in COLOR_RELOJ_MINUTO_ACTIVO_NEBULA)
+    color_reloj_minuto_activo = tuple(int(d+0.5) for d in color_reloj_minuto_activo)
+    color_reloj_segundo_activo=tuple(c*factor_ajuste_brillo_activos for c in COLOR_RELOJ_SEGUNDO_ACTIVO_NEBULA)
+    color_reloj_segundo_activo = tuple(int(d+0.5) for d in color_reloj_segundo_activo)
+  elif(paletaColores==2):
+    color_reloj_horas_inactivas=tuple(c*factor_ajuste_brillo_inactivos for c in COLOR_RELOJ_HORAS_INACTIVAS_MINIMALISTA)
+    color_reloj_horas_inactivas = tuple(int(d+0.5) for d in color_reloj_horas_inactivas)
+    color_reloj_minutos_inactivos=tuple(c*factor_ajuste_brillo_inactivos for c in COLOR_RELOJ_MINUTOS_INACTIVOS_MINIMALISTA)
+    color_reloj_minutos_inactivos = tuple(int(d+0.5) for d in color_reloj_minutos_inactivos)
+    color_reloj_hora_activa=tuple(c*factor_ajuste_brillo_activos for c in COLOR_RELOJ_HORA_ACTIVA_MINIMALISTA)
+    color_reloj_hora_activa = tuple(int(d+0.5) for d in color_reloj_hora_activa)
+    color_reloj_minuto_activo=tuple(c*factor_ajuste_brillo_activos for c in COLOR_RELOJ_MINUTO_ACTIVO_MINIMALISTA)
+    color_reloj_minuto_activo = tuple(int(d+0.5) for d in color_reloj_minuto_activo)
+    color_reloj_segundo_activo=tuple(c*factor_ajuste_brillo_activos for c in COLOR_RELOJ_SEGUNDO_ACTIVO_MINIMALISTA)
+    color_reloj_segundo_activo = tuple(int(d+0.5) for d in color_reloj_segundo_activo)
+
+  print('Nuevo valor para la variable diseño (V0):',paletaColores)
+  #print(color_reloj_horas_inactivas,color_reloj_minutos_inactivos)
+  #print(color_reloj_hora_activa,color_reloj_minuto_activo,color_reloj_minuto_activo)
+
+@blynk.on("V1")
+#-------------------------------------------------------------------------------
+def v1_write_handler_modo(value):
+#-------------------------------------------------------------------------------
+  global brillo
+
+  brillo = float(value[0])
+
+  print('Nuevo valor para la variable brillo (V1):',brillo)
 
 #///////////////////////////////////////////////////////////////////////////////
 #/                             FIN FUNCIONES BLYNK
