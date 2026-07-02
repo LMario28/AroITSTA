@@ -40,6 +40,8 @@ import math
 
 from machine import WDT
 
+from Logo_Electronica24x24 import logo_electronica_rgb
+
 #///////////////////////////////////////////////////////////////////////////////
 #/                               CONSTANTES                                   //
 #///////////////////////////////////////////////////////////////////////////////
@@ -52,6 +54,8 @@ BLYNK_AUTH = 'apvVB1KTve_HC0uEb8ltb7tME6GhWIBs'
 
 NUMERO_LEDs_RELOJ=291
 NUMERO_LEDS_SOLO_ARO=180
+NUMERO_FILAS_PANTALLA=24
+NUMERO_COLUMNAS_PANTALLA=24
 NUMERO_LEDs_PANTALLA=576                                                       # Filas: 24, Columnas: 24
 PERIODO_FLASH_LED=1000
 LEDs_HORA=15
@@ -165,8 +169,8 @@ bandera_animacion_iniciada=False
 incrementoDecremento=1
 contadorAnimaciones=0
 
-factor_ajuste_brillo_inactivos=0.25
-factor_ajuste_brillo_activos=0.8
+factor_ajuste_brillo_inactivos=0.5
+factor_ajuste_brillo_activos=1
 color_reloj_horas_inactivas=tuple(c*factor_ajuste_brillo_inactivos for c in COLOR_RELOJ_HORAS_INACTIVAS_FASCINACION)
 color_reloj_horas_inactivas = tuple(int(d+0.5) for d in color_reloj_horas_inactivas)
 color_reloj_minutos_inactivos=tuple(c*factor_ajuste_brillo_inactivos for c in COLOR_RELOJ_MINUTOS_INACTIVOS_FASCINACION)
@@ -291,16 +295,16 @@ def desplegarEsqueleto():
 #-------------------------------------------------------------------------------
   # MINUTO MINUTO MINUTO
   for i in range(60):
-    pixels[3*i] = (0,4,0)
+    pixels[3*i] = color_reloj_minutos_inactivos
 
   # HORA HORA HORA
-  pixels[179] = (10,0,10)                                                         # LED 183
-  pixels[0] = (10,0,10)
-  pixels[1] = (10,0,10)
+  pixels[179] = color_reloj_horas_inactivas                                     # LED 183
+  pixels[0] = color_reloj_horas_inactivas
+  pixels[1] = color_reloj_horas_inactivas
   for i in range(1,12):
-    pixels[15*i-1] = (10,0,10)
-    pixels[15*i] = (10,0,10)
-    pixels[15*i+1] = (10,0,10)
+    pixels[15*i-1] = color_reloj_horas_inactivas
+    pixels[15*i] = color_reloj_horas_inactivas
+    pixels[15*i+1] = color_reloj_horas_inactivas
   if(RTC().datetime()[6]==0):
     print(f"Desplegada la hora: {RTC().datetime()[4]}:{RTC().datetime()[5]}:{RTC().datetime()[6]}")
 
@@ -331,8 +335,10 @@ def map(x, in_min, in_max, out_min, out_max):
 #-------------------------------------------------------------------------------
 def desplegarImagen():
 #-------------------------------------------------------------------------------
-  for i in range(24*24):
-    pixelsPantalla[i] = (0,0,10)
+  for i in range(NUMERO_FILAS_PANTALLA):
+    for j in range(NUMERO_COLUMNAS_PANTALLA):
+      #print("Pantalla:",NUMERO_FILAS_PANTALLA*(NUMERO_COLUMNAS_PANTALLA-i)-j-1,"Archivo;",NUMERO_FILAS_PANTALLA*i+j)
+      pixelsPantalla[NUMERO_FILAS_PANTALLA*(NUMERO_COLUMNAS_PANTALLA-i)-j-1] = logo_electronica_rgb[NUMERO_FILAS_PANTALLA*i+j]
   pixelsPantalla.write()
 
 #-------------------------------------------------------------------------------
@@ -526,6 +532,7 @@ timer = BlynkTimer()
 #-------------------------------------------------------------------------------
 def blynk_connected(ping):
 #-------------------------------------------------------------------------------
+  blynk.sync_virtual(0,1)
   desplegarMensajeVisual(3)
   print('Blynk ready. Ping:', ping, 'ms')
   blynk.send_internal("utc","time")
@@ -536,7 +543,6 @@ def blynk_connected(ping):
 def blynk_disconnected():
 #-------------------------------------------------------------------------------
   print('Blynk disconnected')
-banderaSalida=False
 
 @blynk.on("internal:utc")
 #-------------------------------------------------------------------------------
@@ -569,13 +575,12 @@ def on_utc(value):
   banderaHoraRecuperadaBlynk=True
 
 @blynk.on("V0")
-#-------------------------------------------------------------------------------
 def v0_write_handler_modo(value):
-#-------------------------------------------------------------------------------
   global paletaColores
   global color_reloj_horas_inactivas,color_reloj_minutos_inactivos
   global color_reloj_hora_activa,color_reloj_minuto_activo,color_reloj_segundo_activo
   paletaColores = int(value[0])
+  print('Nuevo valor para la variable diseño (V0):',paletaColores)
 
   if(paletaColores==3):
     paletaColores = random.randint(0,NUMERO_PALETAS_COLORES-2)
@@ -614,14 +619,11 @@ def v0_write_handler_modo(value):
     color_reloj_segundo_activo=tuple(c*factor_ajuste_brillo_activos for c in COLOR_RELOJ_SEGUNDO_ACTIVO_MINIMALISTA)
     color_reloj_segundo_activo = tuple(int(d+0.5) for d in color_reloj_segundo_activo)
 
-  print('Nuevo valor para la variable diseño (V0):',paletaColores)
   #print(color_reloj_horas_inactivas,color_reloj_minutos_inactivos)
   #print(color_reloj_hora_activa,color_reloj_minuto_activo,color_reloj_minuto_activo)
 
 @blynk.on("V1")
-#-------------------------------------------------------------------------------
 def v1_write_handler_modo(value):
-#-------------------------------------------------------------------------------
   global brillo
 
   brillo = float(value[0])
@@ -652,7 +654,7 @@ banderaReloj = True
 while not banderaHoraRecuperadaBlynk:
   blynk.run()
   timer.run()
-blynk.disconnect()
+# blynk.disconnect()
 # wifi.disconnect()
 # time.sleep(1)
 # if not wifi.isconnected():
@@ -663,6 +665,9 @@ blynk.disconnect()
 # CICLO INFINITO EN ESPERA POR EVENTOS
 hora_inicial_tarea=time.ticks_ms()-1000
 while True:
+
+  blynk.run()
+  timer.run()
 
   try:
     # Posiciones en RTC(): 0. Año; 1: Mes; 2: Día; 4: Hora; 5: Minuto; 6: Segundo
