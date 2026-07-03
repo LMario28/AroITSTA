@@ -935,12 +935,37 @@ def map(x, in_min, in_max, out_min, out_max):
 
 #-------------------------------------------------------------------------------
 def desplegarImagen():
-#-------------------------------------------------------------------------------
-  for i in range(NUMERO_FILAS_PANTALLA):
-    for j in range(NUMERO_COLUMNAS_PANTALLA):
-      #print("Pantalla:",NUMERO_FILAS_PANTALLA*(NUMERO_COLUMNAS_PANTALLA-i)-j-1,"Archivo;",NUMERO_FILAS_PANTALLA*i+j)
-      pixelsPantalla[NUMERO_FILAS_PANTALLA*(NUMERO_COLUMNAS_PANTALLA-i)-j-1] = LOGO_ELECTRONICA_RGB[NUMERO_FILAS_PANTALLA*i+j]
-  pixelsPantalla.write()
+  """
+  Muestra el logo en la matriz de LEDs con disposición serpenteante vertical
+  La tira comienza en la esquina inferior derecha y sube en zigzag
+  """
+  ancho = NUMERO_COLUMNAS_PANTALLA  # 24
+  alto = NUMERO_FILAS_PANTALLA      # 24
+
+  for y in range(alto):
+    for x in range(ancho):
+      # Índice en la imagen (orden normal: fila por fila)
+      idx_imagen = y * ancho + x
+
+      # Calcular índice físico en la tira de LEDs
+      # Invertir Y (0 = arriba)
+      y_inv = (alto - 1) - y
+
+      # Columna desde la derecha (donde comienza la tira)
+      col_desde_derecha = (ancho - 1) - x
+
+      # Alternar dirección según la columna
+      if col_desde_derecha % 2 == 0:
+        # Columna par: sube (de abajo hacia arriba)
+        idx_led = col_desde_derecha * alto + y_inv
+      else:
+        # Columna impar: baja (de arriba hacia abajo)
+        idx_led = col_desde_derecha * alto + (alto - 1 - y_inv)
+
+        # Asignar el color
+        pixelsPantalla[idx_led] = LOGO_ELECTRONICA_RGB[idx_imagen]
+
+    pixelsPantalla.write()
 
 #-------------------------------------------------------------------------------
 def desplegarHoraMinuto():
