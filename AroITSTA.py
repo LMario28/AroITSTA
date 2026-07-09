@@ -371,9 +371,9 @@ def desplegarHoraHora():
   ledHoraActual = map(3600 * hora + 60 * RTC().datetime()[5] + RTC().datetime()[6], 0, 43200, 0, NUMERO_LEDS_SOLO_ARO) + 1;
 
   # Asegurar que los índices estén dentro del rango circular (0-119)
-  indice1 = (ledHoraActual - 1) % NUMERO_LEDs_RELOJ
-  indice2 = ledHoraActual % NUMERO_LEDs_RELOJ
-  indice3 = (ledHoraActual + 1) % NUMERO_LEDs_RELOJ
+  indice1 = (ledHoraActual - 1) % NUMERO_LEDS_SOLO_ARO
+  indice2 = ledHoraActual % NUMERO_LEDS_SOLO_ARO
+  indice3 = (ledHoraActual + 1) % NUMERO_LEDS_SOLO_ARO
 
   pixels[indice1] = color_reloj_hora_activa
   pixels[indice2] = color_reloj_hora_activa
