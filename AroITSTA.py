@@ -141,7 +141,7 @@ NEWKITT_PAUSA_AL_FINAL=50
 # LOGO
 # Color de fondo uniforme (azul muy oscuro)
 COLOR_FONDO = (0, 5, 20)  # Azul muy oscuro (ajusta si quieres más oscuro)
-COLOR_VERDE = (0, 128, 0)
+COLOR_VERDE = (0, 100, 0)
 
 LOGO_ELECTRONICA_RGB = [
     # Fila 0
