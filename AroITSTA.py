@@ -340,8 +340,8 @@ def actualizarHora():
   pixels.fill((0,0,0))
   desplegarEsqueleto()
   desplegarHoraHora()
-  desplegarHoraMinuto()
-  desplegarHoraSegundo()
+  #desplegarHoraMinuto()
+  #desplegarHoraSegundo()
   pixels.write()
 
 #-------------------------------------------------------------------------------
@@ -574,7 +574,7 @@ else:
 
 actualizarSketch()
 
-desplegarImagen()
+#desplegarImagen()
 
 print("Connecting to Blynk server...")
 blynk = BlynkLib_deepseek.Blynk(BLYNK_AUTH)
