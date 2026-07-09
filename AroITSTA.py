@@ -393,9 +393,9 @@ def desplegarImagen():
     for j in range(NUMERO_COLUMNAS_PANTALLA):
       #print("Pantalla:",NUMERO_FILAS_PANTALLA*(NUMERO_COLUMNAS_PANTALLA-i)-j-1,"Archivo;",NUMERO_FILAS_PANTALLA*i+j)
       # Sin aplicar giro de imagnen
-      pixelsPantalla[NUMERO_FILAS_PANTALLA*(NUMERO_COLUMNAS_PANTALLA-i)-j-1] = LOGO_ELECTRONICA_RGB[NUMERO_FILAS_PANTALLA*i+j]
+      #pixelsPantalla[NUMERO_FILAS_PANTALLA*(NUMERO_COLUMNAS_PANTALLA-i)-j-1] = LOGO_ELECTRONICA_RGB[NUMERO_FILAS_PANTALLA*i+j]
       # Aplicando giro de imagnen de 90° en el sentido de las manecillas delreloj
-      #pixelsPantalla[NUMERO_FILAS_PANTALLA*(NUMERO_COLUMNAS_PANTALLA-(23-j))-i-1] = LOGO_ELECTRONICA_RGB[NUMERO_FILAS_PANTALLA*i+j]
+      pixelsPantalla[NUMERO_FILAS_PANTALLA*(NUMERO_COLUMNAS_PANTALLA-(23-j))-i-1] = LOGO_ELECTRONICA_RGB[NUMERO_FILAS_PANTALLA*i+j]
   pixelsPantalla.write()
 
 #-------------------------------------------------------------------------------
