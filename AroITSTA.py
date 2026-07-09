@@ -367,7 +367,7 @@ def desplegarHoraHora():
 #-------------------------------------------------------------------------------
   hora = RTC().datetime()[4]
   if(hora>=12):
-    hora -= 13
+    hora -= 12
   ledHoraActual = map(3600 * hora + 60 * RTC().datetime()[5] + RTC().datetime()[6], 0, 43200, 0, NUMERO_LEDS_SOLO_ARO) + 1;
 
   # Asegurar que los índices estén dentro del rango circular (0-119)
