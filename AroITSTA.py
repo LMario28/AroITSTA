@@ -38,6 +38,11 @@ from ota_deepseek import OTAUpdater
 import random
 import math
 
+#Para diagnóstico de memoria
+import gc
+import micropython
+import sys
+
 from machine import WDT
 
 #///////////////////////////////////////////////////////////////////////////////
@@ -340,8 +345,8 @@ def actualizarHora():
   pixels.fill((0,0,0))
   desplegarEsqueleto()
   desplegarHoraHora()
-  #desplegarHoraMinuto()
-  #desplegarHoraSegundo()
+  desplegarHoraMinuto()
+  desplegarHoraSegundo()
   pixels.write()
 
 #-------------------------------------------------------------------------------
@@ -389,14 +394,28 @@ def map(x, in_min, in_max, out_min, out_max):
 #-------------------------------------------------------------------------------
 def desplegarImagen():
 #-------------------------------------------------------------------------------
-  for i in range(NUMERO_FILAS_PANTALLA):
-    for j in range(NUMERO_COLUMNAS_PANTALLA):
-      #print("Pantalla:",NUMERO_FILAS_PANTALLA*(NUMERO_COLUMNAS_PANTALLA-i)-j-1,"Archivo;",NUMERO_FILAS_PANTALLA*i+j)
-      # Sin aplicar giro de imagnen
-      #pixelsPantalla[NUMERO_FILAS_PANTALLA*(NUMERO_COLUMNAS_PANTALLA-i)-j-1] = LOGO_ELECTRONICA_RGB[NUMERO_FILAS_PANTALLA*i+j]
-      # Aplicando giro de imagnen de 90° en el sentido de las manecillas delreloj
-      pixelsPantalla[NUMERO_FILAS_PANTALLA*(NUMERO_COLUMNAS_PANTALLA-(23-j))-i-1] = LOGO_ELECTRONICA_RGB[NUMERO_FILAS_PANTALLA*i+j]
-  pixelsPantalla.write()
+    """
+    Muestra el logo en la matriz de LEDs.
+    LED 0: fila 23, columna 23 (esquina inferior derecha)
+    """
+    for fila in range(24):
+        for col in range(24):
+            # Índice en la lista (orden normal)
+            idx_imagen = fila * 24 + col
+            
+            # Calcular índice físico en la tira
+            col_desde_derecha = 23 - col
+            
+            if col_desde_derecha % 2 == 0:
+                # Columna par: sube (fila 23 → 0)
+                idx_led = col_desde_derecha * 24 + (23 - fila)
+            else:
+                # Columna impar: baja (fila 0 → 23)
+                idx_led = col_desde_derecha * 24 + fila
+            
+            pixelsPantalla[idx_led] = LOGO_ELECTRONICA_RGB[idx_imagen]
+    
+    pixelsPantalla.write()
 
 #-------------------------------------------------------------------------------
 def desplegarHoraMinuto():
@@ -520,6 +539,76 @@ def apagar_todos_leds():
     pixels[i] = (0, 0, 0)
   pixels.write()
 
+#-------------------------------------------------------------------------------
+def diagnosticar_memoria():
+#-------------------------------------------------------------------------------
+    print("=" * 50)
+    print("📊 DIAGNÓSTICO DE MEMORIA - ESP32-S3")
+    print("=" * 50)
+    
+    # 1. Estado de la recolección de basura
+    print("\n🧹 RECOLECCIÓN DE BASURA:")
+    gc.collect()
+    libre = gc.mem_free()
+    usado = gc.mem_alloc()
+    print(f"   Memoria libre: {libre:>8} bytes ({libre/1024:.1f} KB)")
+    print(f"   Memoria usada: {usado:>8} bytes ({usado/1024:.1f} KB)")
+    print(f"   Total: {(libre + usado)/1024:.1f} KB")
+    
+    # 2. Información de PSRAM
+    print("\n💾 PSRAM:")
+    try:
+        import esp
+        psram_size = esp.psram_size()
+        if psram_size > 0:
+            print(f"   PSRAM total: {psram_size:,} bytes ({psram_size/1024/1024:.1f} MB)")
+        else:
+            print("   ⚠️ PSRAM no detectada")
+    except:
+        print("   ⚠️ No se puede verificar PSRAM")
+    
+    # 3. Prueba de asignación de memoria
+    print("\n🧪 PRUEBA DE MEMORIA:")
+    try:
+        test = bytearray(10000)
+        print("   ✅ Asignación de 10KB: EXITOSA")
+        del test
+        gc.collect()
+    except MemoryError:
+        print("   ❌ Asignación de 10KB: FALLIDA")
+    
+    # 4. Objetos NeoPixel
+    print("\n💡 OBJETOS NEOPIXEL:")
+    buffer_aro = 180 * 3
+    buffer_pantalla = 576 * 3
+    print(f"   Buffer círculo: {buffer_aro} bytes (180 LEDs)")
+    print(f"   Buffer pantalla: {buffer_pantalla} bytes (576 LEDs)")
+    print(f"   Total buffers: {buffer_aro + buffer_pantalla} bytes")
+    
+    # 5. Información del sistema
+    print("\n🔧 SISTEMA:")
+    print(f"   MicroPython: {sys.version}")
+    print(f"   Hardware: {sys.implementation._machine}")
+    
+    # 6. Resumen
+    print("\n" + "=" * 50)
+    print("📋 RESUMEN:")
+    print("=" * 50)
+    if libre < 20000:
+        print("⚠️ MEMORIA CRÍTICA: < 20KB libre")
+        print("   Recomendaciones:")
+        print("   - Desactivar OTA automática")
+        print("   - Usar PSRAM para datos grandes")
+    elif libre < 50000:
+        print("⚠️ MEMORIA BAJA: < 50KB libre")
+        print("   Recomendaciones:")
+        print("   - Optimizar el código")
+        print("   - Usar PSRAM para datos grandes")
+    else:
+        print("✅ MEMORIA ADECUADA")
+        print(f"   {libre/1024:.1f} KB libres")
+    print("=" * 50)
+
 #///////////////////////////////////////////////////////////////////////////////
 #/ PROCESO   PROCESO   PROCESO   PROCESO   PROCESO   PROCESO   PROCESO        //
 #///////////////////////////////////////////////////////////////////////////////
@@ -527,8 +616,6 @@ def apagar_todos_leds():
 def proceso():
 #-------------------------------------------------------------------------------
   pass
-
-print("Versión del programa: 1")
 
 # import os
 # stats = os.stat('AroITSTA.py')
@@ -572,9 +659,12 @@ if wifi.isconnected():
 else:
   print("\n❌ No se pudo conectar a WiFi")
 
+# Ejecutar el diagnóstico de memoria
+diagnosticar_memoria()
+
 actualizarSketch()
 
-#desplegarImagen()
+desplegarImagen()
 
 print("Connecting to Blynk server...")
 blynk = BlynkLib_deepseek.Blynk(BLYNK_AUTH)
@@ -589,7 +679,6 @@ timer = BlynkTimer()
 #-------------------------------------------------------------------------------
 def blynk_connected(ping):
 #-------------------------------------------------------------------------------
-  blynk.sync_virtual(0,1)
   desplegarMensajeVisual(3)
   print('Blynk ready. Ping:', ping, 'ms')
   blynk.send_internal("utc","time")
