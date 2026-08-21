@@ -152,7 +152,7 @@ NEWKITT_PAUSA_AL_FINAL=50
 
 # LOGO
 # Color de fondo uniforme (azul muy oscuro)
-COLOR_FONDO = (0, 2, 10)  # Azul muy oscuro (ajusta si quieres más oscuro)
+COLOR_FONDO = (0, 0, 3)  # Azul muy oscuro (ajusta si quieres más oscuro)
 #COLOR_FONDO = (0, 5, 20)  # Azul muy oscuro (ajusta si quieres más oscuro)
 COLOR_VERDE = (0, 100, 0)
 COLOR_VERDE_OPACO = (0, 25, 0)
