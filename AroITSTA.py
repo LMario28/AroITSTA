@@ -297,7 +297,7 @@ bandera_animacion_iniciada=False
 incrementoDecremento=1
 contadorAnimaciones=0
 
-factor_ajuste_brillo_inactivos=0.5
+factor_ajuste_brillo_inactivos=1.5
 factor_ajuste_brillo_activos=1
 color_reloj_horas_inactivas=tuple(c*factor_ajuste_brillo_inactivos for c in COLOR_RELOJ_HORAS_INACTIVAS_FASCINACION)
 color_reloj_horas_inactivas = tuple(int(d+0.5) for d in color_reloj_horas_inactivas)
@@ -935,7 +935,7 @@ while True:
       opcion_seleccionada_azar=0
       diaInicial = RTC().datetime()[2]
 
-    if (RTC().datetime()[1]==8):                                                # Septiembre
+    if (RTC().datetime()[1]==9):                                                # Septiembre
       if (RTC().datetime()[5]%2!=0):
         if (not bandera_reloj):
           #timerReloj = timer.set_interval(1,actualizarHora)
