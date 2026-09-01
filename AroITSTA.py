@@ -74,7 +74,7 @@ import time
 import BlynkLib_deepseek     # https://github.com/vshymanskyy/blynk-library-python/blob/master/examples/03_sync_virtual.py
 from BlynkTimer_lmms import BlynkTimer
 import network
-from ota_deepseek import OTAUpdater
+from ota_deepseek_chunks import OTAUpdater
 import random
 import math
 
@@ -935,7 +935,7 @@ while True:
       opcion_seleccionada_azar=0
       diaInicial = RTC().datetime()[2]
 
-    if (RTC().datetime()[1]==9):                                                # Septiembre
+    if (RTC().datetime()[1]==8):                                                # Septiembre
       if (RTC().datetime()[5]%2!=0):
         if (not bandera_reloj):
           #timerReloj = timer.set_interval(1,actualizarHora)
@@ -955,6 +955,7 @@ while True:
             opcion_seleccionada_azar = random.randint(1,1)
           if (opcion_seleccionada_azar==1):
             bandera()
+            print("Desplegando la bandera")
           bandera_animacion_iniciada = True
     elif (RTC().datetime()[1]==12):                                              # Diciembre|Enero
       if (RTC().datetime()[5]%2!=0):
