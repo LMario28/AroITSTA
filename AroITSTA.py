@@ -935,7 +935,7 @@ while True:
       opcion_seleccionada_azar=0
       diaInicial = RTC().datetime()[2]
 
-    if (RTC().datetime()[1]==8):                                                # Septiembre
+    if (RTC().datetime()[1]==9):                                                # Septiembre
       if (RTC().datetime()[5]%2!=0):
         if (not bandera_reloj):
           #timerReloj = timer.set_interval(1,actualizarHora)
