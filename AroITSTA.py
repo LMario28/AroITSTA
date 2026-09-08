@@ -326,6 +326,7 @@ bandera_reloj=True
 bandera_animacion_iniciada=False
 incrementoDecremento=1
 contadorAnimaciones=0
+contadorIntentosConectarInternet=0
 
 factor_ajuste_brillo_inactivos=1.5
 factor_ajuste_brillo_activos=1
@@ -407,13 +408,10 @@ def desplegarMensajeVisual(tipLla):
 #-------------------------------------------------------------------------------
   # Conexión a red WLAN fallida (un parpadeo en rojo)
   if(tipLla==1):
-    for i in range(1):
-      pixels.fill((255,0,0))
-      pixels.write()
-      time.sleep(0.25)
-      pixels.fill((0,0,0))
-      pixels.write()
-      time.sleep(0.25)
+    for i in range(180//8*contadorIntentosConectarInternet):
+      pixels[i] = (100,0,0)
+    pixels.write()
+    print("\nError al conectar a LAN. Encendidos",180//8*contadorIntentosConectarInternet,"LEDs en rojo")
   # Conexión a red WLAN exitosa (un parpadeo en verde opaco)
   elif(tipLla==2):
     for i in range(1):
@@ -780,13 +778,13 @@ def proceso():
 # print(f"Memoria libre: {gc.mem_free()} bytes")
 
 seleccionarMejorRedWiFiDisponible()
-print("Connecting to WiFi network '{}'".format(SSID))
+print("Conectando a la red WiFi '{}'".format(SSID))
 wifi = network.WLAN(network.STA_IF)
 wifi.active(True)
 
 # Configurar IP FIJA
 if(SSID=="TP-Link_LMario_DHCP"):
-  IP_FIJA = "192.168.0.52"
+  IP_FIJA = "192.168.0.51"
   MASCARA = "255.255.255.0"
   GATEWAY = "192.168.0.1"
   DNS = "192.168.0.1"
@@ -795,10 +793,14 @@ if(SSID=="TP-Link_LMario_DHCP"):
 
 wifi.connect(SSID,PASSWD)
 while not wifi.isconnected():
-  time.sleep(5)
+  contadorIntentosConectarInternet += 1
+  print('.',end='')
+  desplegarMensajeVisual(1)
+  time.sleep(2)
+  if(contadorIntentosConectarInternet==8):
+    ESP.restart()
   if (WATCHDOG):
     wdt.feed()
-  print('WiFi connect retry ...')
 
 if wifi.isconnected():
   print("\n✅ Conectado a WiFi")
