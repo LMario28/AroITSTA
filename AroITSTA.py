@@ -228,6 +228,36 @@ ESCUDO_MEXICO_RGB = [
   COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,COLOR_BLANCO,
 ]
 
+COLOR_SALUDO_VIVA_MEXICO=(255,30,0)
+
+MENSAJE_VIVA_MEXICO = [
+  "                        ",
+  "  1     1               ",
+  "  1     1               ",
+  "1  1   1  111 1   1  1  ",
+  "   1   1   1   1  1 1 1 ",
+  "1   1 1    1   1 1  111 ",
+  "1   1 1    1    1   111 ",
+  "1    1    111   1   1 1 ",
+  "                        ",
+  "1   1   1               ",
+  "11 11  1                ",
+  "11 11 111 1 1 111 11 111",
+  "11 11 1    1   1  1  1 1",
+  "1 1 1 11   1   1  1  1 1",
+  "1 1 1 1    1   1  1  1 1",
+  "1   1 111 1 1 111 11 111",
+  "                        ",
+  "      111111            ",
+  "      11                ",
+  "      11         1      ",
+  "      11         1      ",
+  "      11         1      ",
+  "      11                ",
+  "      111111 111 1      ",
+  "                        "
+]
+
 # # ============================================================
 # # Oscurecer el escudo (guardando en el mismo arreglo)
 # # ============================================================
@@ -512,7 +542,12 @@ def bandera():
 
   pixels.write()
 
-  desplegarImagen(1)
+  if(random.randint(1,3)!=3):
+    desplegarImagen(1)
+    print("escudo")
+  else:
+    desplegarImagen(2)
+    print("mensaje")
 
 #-------------------------------------------------------------------------------
 def desplegarImagen(numeroImagen):
@@ -539,6 +574,15 @@ def desplegarImagen(numeroImagen):
             if(numeroImagen==1):
               pixelsPantalla[idx_led] = ESCUDO_MEXICO_RGB[idx_imagen]
             elif(numeroImagen==2):
+              digito=MENSAJE_VIVA_MEXICO[fila][col]
+              if(digito=="1"):
+                pixelsPantalla[idx_led] = COLOR_SALUDO_VIVA_MEXICO
+                
+#               print(digito,end="")
+#               if(col==23):
+#                 print()
+
+            elif(numeroImagen==3):
               pixelsPantalla[idx_led] = LOGO_ELECTRONICA_RGB[idx_imagen]
     
     pixelsPantalla.write()
@@ -742,7 +786,7 @@ wifi.active(True)
 
 # Configurar IP FIJA
 if(SSID=="TP-Link_LMario_DHCP"):
-  IP_FIJA = "192.168.0.51"
+  IP_FIJA = "192.168.0.52"
   MASCARA = "255.255.255.0"
   GATEWAY = "192.168.0.1"
   DNS = "192.168.0.1"
@@ -777,7 +821,7 @@ diagnosticar_memoria()
 
 actualizarSketch()
 
-desplegarImagen(2)
+desplegarImagen(3)
 
 print("Connecting to Blynk server...")
 blynk = BlynkLib_deepseek.Blynk(BLYNK_AUTH)
@@ -942,7 +986,7 @@ while True:
           bandera_reloj = True
           bandera_animacion_iniciada = False
           print("Desplegando la hora")
-          desplegarImagen(2)
+          desplegarImagen(3)
         if(time.ticks_ms()-hora_inicial_tarea>1000):
           actualizarHora()
           hora_inicial_tarea = time.ticks_ms()
@@ -954,8 +998,8 @@ while True:
           if (opcion_seleccionada_azar==0):
             opcion_seleccionada_azar = random.randint(1,1)
           if (opcion_seleccionada_azar==1):
+            print("Desplegando la bandera con ",end='')
             bandera()
-            print("Desplegando la bandera")
           bandera_animacion_iniciada = True
     elif (RTC().datetime()[1]==12):                                              # Diciembre|Enero
       if (RTC().datetime()[5]%2!=0):
