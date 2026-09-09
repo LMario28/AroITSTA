@@ -555,6 +555,7 @@ def desplegarImagen(numeroImagen):
     Muestra el logo en la matriz de LEDs.
     LED 0: fila 23, columna 23 (esquina inferior derecha)
     """
+    pixelsPantalla.fill((0,0,0))
     for fila in range(24):
         for col in range(24):
             # Índice en la lista (orden normal)
@@ -570,7 +571,6 @@ def desplegarImagen(numeroImagen):
                 # Columna impar: baja (fila 0 → 23)
                 idx_led = col_desde_derecha * 24 + fila
 
-            pixelsPantalla.fill((0,0,0))
             if(numeroImagen==1):
               pixelsPantalla[idx_led] = ESCUDO_MEXICO_RGB[idx_imagen]
             elif(numeroImagen==2):
