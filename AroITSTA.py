@@ -408,6 +408,7 @@ def desplegarMensajeVisual(tipLla):
 #-------------------------------------------------------------------------------
   # Conexión a red WLAN fallida (un parpadeo en rojo)
   if(tipLla==1):
+    pixels.fill((0,0,0))
     for i in range(180//8*contadorIntentosConectarInternet):
       pixels[i] = (100,0,0)
     pixels.write()
