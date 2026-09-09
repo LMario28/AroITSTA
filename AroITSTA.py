@@ -408,6 +408,7 @@ def desplegarMensajeVisual(tipLla):
 #-------------------------------------------------------------------------------
   # Conexión a red WLAN fallida (un parpadeo en rojo)
   if(tipLla==1):
+    pixels.fill((0,0,0))
     for i in range(180//8*contadorIntentosConectarInternet):
       pixels[i] = (100,0,0)
     pixels.write()
@@ -569,7 +570,7 @@ def desplegarImagen(numeroImagen):
                 # Columna impar: baja (fila 0 → 23)
                 idx_led = col_desde_derecha * 24 + fila
 
-            pixels.fill((0,0,0))
+            pixelsPantalla.fill((0,0,0))
             if(numeroImagen==1):
               pixelsPantalla[idx_led] = ESCUDO_MEXICO_RGB[idx_imagen]
             elif(numeroImagen==2):
