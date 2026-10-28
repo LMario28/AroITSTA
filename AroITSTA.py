@@ -88,8 +88,8 @@ from machine import WDT
 #///////////////////////////////////////////////////////////////////////////////
 #/                               CONSTANTES                                   //
 #///////////////////////////////////////////////////////////////////////////////
-WIFI_SSID = ['INFINITUM2426_2.4','Electronica Hotspot PC','Xperia XZ2','TP-Link_LMario_DHCP']
-WIFI_PASS = ['CNnC917MDE','electronica26','lmario28','lmario28']
+WIFI_SSID = ['INFINITUM2426_2.4','Xperia XZ2','TP-Link_LMario_DHCP']
+WIFI_PASS = ['CNnC917MDE','lmario28','lmario28']
 STATIC_IP_CONFIG = ('192.168.40.222', '255.255.255.0', '192.168.40.1', '4.2.2.2 8.8.8.8')
 SSID=''
 PASSWD=''
@@ -409,10 +409,10 @@ def desplegarMensajeVisual(tipLla):
   # Conexión a red WLAN fallida (un parpadeo en rojo)
   if(tipLla==1):
     pixels.fill((0,0,0))
-    for i in range(180//8*contadorIntentosConectarInternet):
+    for i in range(int(180/8*contadorIntentosConectarInternet)):
       pixels[i] = (100,0,0)
     pixels.write()
-    print("\nError al conectar a LAN. Encendidos",180//8*contadorIntentosConectarInternet,"LEDs en rojo")
+    print("\nError al conectar a LAN. Encendidos",int(180/8*contadorIntentosConectarInternet),"LEDs en rojo")
   # Conexión a red WLAN exitosa (un parpadeo en verde opaco)
   elif(tipLla==2):
     for i in range(1):
@@ -780,7 +780,18 @@ def proceso():
 # print(f"Memoria libre: {gc.mem_free()} bytes")
 
 seleccionarMejorRedWiFiDisponible()
+while len(SSID)==0:
+  contadorIntentosConectarInternet += 1
+  print('.',end='')
+  desplegarMensajeVisual(1)
+  time.sleep(3)
+  if(contadorIntentosConectarInternet==8):
+    machine.reset()
+  seleccionarMejorRedWiFiDisponible()
+  if (WATCHDOG):
+    wdt.feed()
 print("Conectando a la red WiFi '{}'".format(SSID))
+
 wifi = network.WLAN(network.STA_IF)
 wifi.active(True)
 
@@ -800,7 +811,7 @@ while not wifi.isconnected():
   desplegarMensajeVisual(1)
   time.sleep(2)
   if(contadorIntentosConectarInternet==8):
-    ESP.restart()
+    machine.reset()
   if (WATCHDOG):
     wdt.feed()
 
